@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+# Commit-msg hook.
+#
+# Enforces the commit message convention (the `commit` skill) by
+# delegating to `php artisan agent-extras:format-commit-message`, which strips the
+# Claude-Session and Claude Co-Authored-By trailers and prints a descriptive
+# error when the message breaks the rules.
+#
+# Enable with: git config core.hooksPath .githooks (composer install does this).
+
+set -euo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+# In a linked worktree git keeps the message file in the *main* repo's .git,
+# which is outside the tree Sail mounts into the container. Work on a copy
+# inside the tree (gitignored) and write the result back.
+if [ "${1#"$ROOT/"}" = "$1" ]; then
+    copy="storage/app/commit-msg.$$"
+    cp "$1" "$ROOT/$copy"
+    trap 'rm -f "$ROOT/$copy"' EXIT
+    artisan agent-extras:format-commit-message "$copy"
+    cp "$ROOT/$copy" "$1"
+else
+    artisan agent-extras:format-commit-message "${1#"$ROOT/"}"
+fi

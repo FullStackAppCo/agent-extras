@@ -1,0 +1,89 @@
+{
+  "$schema": "https://getcomposer.org/schema.json",
+  "version": "0.1.0",
+  "name": "fsac/agent-extras",
+  "description": "Artisan commands that enforce FSAC git conventions for agent-driven Laravel projects",
+  "keywords": [
+    "laravel",
+    "git",
+    "hooks",
+    "agents",
+    "claude"
+  ],
+  "homepage": "https://gitlab.com/fullstackappco/agent-extras",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Joby Harding",
+      "email": "code@fullstackappco.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": "^8.5",
+    "illuminate/console": "*",
+    "illuminate/support": "^12.0||^13.0"
+  },
+  "require-dev": {
+    "fsac/rector-extras": "0.1.4",
+    "larastan/larastan": "^3.0",
+    "laravel/pint": "^1.30",
+    "orchestra/testbench": "^10.0||^11.0",
+    "phpunit/phpunit": "^13.0",
+    "rector/rector": "^2.6"
+  },
+  "autoload": {
+    "psr-4": {
+      "FullStackAppCo\\AgentExtras\\": "src/"
+    },
+    "exclude-from-classmap": [
+      "/tests/Feature/Fixtures/"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "repositories": [
+    {
+      "name": "rector-extras",
+      "type": "vcs",
+      "url": "https://gitlab.com/fullstackappco/rector-extras.git"
+    }
+  ],
+  "scripts": {
+    "post-autoload-dump": [],
+    "post-install-cmd": [
+      "git config core.hooksPath .githooks || true"
+    ],
+    "analyze": [
+      "@php vendor/bin/phpstan analyse"
+    ],
+    "format": [
+      "@php vendor/bin/pint"
+    ],
+    "refactor": [
+      "@php vendor/bin/rector process"
+    ],
+    "test": [
+      "@php vendor/bin/phpunit -d memory_limit=2G"
+    ]
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "FullStackAppCo\\AgentExtras\\ServiceProvider"
+      ],
+      "aliases": {}
+    }
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "phpstan/extension-installer": true
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
