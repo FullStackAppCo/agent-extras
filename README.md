@@ -76,6 +76,14 @@ Validates a tag name against the tag naming convention: a `v`-prefixed semantic 
 
 Takes the path to a commit message file, strips any `Claude-Session:` and `Co-Authored-By: Claude` trailers Claude Code appended, writes the result back, and then validates the message against the commit message convention: a single terse subject in sentence case with no trailing full stop and no descriptive body, optionally ending in a bare `#issue` number (e.g. `Added qa checks #8`). Trailers such as a human `Co-Authored-By` are allowed after a blank line. Messages git writes itself (merges, reverts, fixups) are exempt.
 
+## Development
+
+`composer install` enables the repository's own hooks (`core.hooksPath`) and symlinks `.claude/skills` to `resources/boost/skills`, so the skills are maintained in one place. The package has no `artisan`, so the hooks run the commands through the Testbench CLI, which boots the service provider listed in `testbench.yaml`:
+
+```bash
+vendor/bin/testbench agent-extras:validate-branch
+```
+
 ## License
 
 [MIT](LICENSE.md)
