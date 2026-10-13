@@ -11,15 +11,20 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-# In a linked worktree git keeps the message file in the *main* repo's .git,
-# which is outside the tree Sail mounts into the container. Work on a copy
-# inside the tree (gitignored) and write the result back.
-if [ "${1#"$ROOT/"}" = "$1" ]; then
-    copy="storage/app/commit-msg.$$"
-    cp "$1" "$ROOT/$copy"
-    trap 'rm -f "$ROOT/$copy"' EXIT
-    artisan agent-extras:format-commit-message "$copy"
-    cp "$ROOT/$copy" "$1"
-else
-    artisan agent-extras:format-commit-message "${1#"$ROOT/"}"
-fi
+# Git passes the message file as a path relative to the repository root, so it
+# is inside the tree and can be used directly. In a linked worktree, however,
+# git keeps the file in the *main* repository's .git and passes an absolute
+# path, which is outside the tree Sail mounts into the container. Work on a
+# copy inside the tree (vendor/ is always present and ignored) and write the
+# result back.
+case "$1" in
+    "$ROOT"/*) artisan agent-extras:format-commit-message "${1#"$ROOT/"}" ;;
+    /*)
+        copy="$(mktemp "$ROOT/vendor/commit-msg.XXXXXX")"
+        trap 'rm -f "$copy"' EXIT
+        cp "$1" "$copy"
+        artisan agent-extras:format-commit-message "${copy#"$ROOT/"}"
+        cp "$copy" "$1"
+        ;;
+    *) artisan agent-extras:format-commit-message "$1" ;;
+esac
