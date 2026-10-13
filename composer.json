@@ -54,7 +54,8 @@
   "scripts": {
     "post-autoload-dump": [],
     "post-install-cmd": [
-      "git config core.hooksPath .githooks || true"
+      "git config core.hooksPath .githooks || true",
+      "mkdir -p .claude && ln -sfn ../resources/boost/skills .claude/skills"
     ],
     "analyze": [
       "@php vendor/bin/phpstan analyse"
