@@ -5,8 +5,6 @@
 # Runs static analysis, refactoring, and formatting against the PHP files that
 # are staged for commit — changed files only — via Herd, Sail or the host PHP
 # (see lib.sh).
-#
-# Enable with: git config core.hooksPath .githooks (composer install does this).
 
 set -euo pipefail
 
