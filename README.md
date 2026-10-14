@@ -2,6 +2,8 @@
 
 Git hooks that enforce the FSAC git conventions in Laravel projects worked on by coding agents, backed by Artisan commands. Each hook validates a branch, tag or commit message against the convention and prints a descriptive error that tells the agent (or human) exactly how to fix it, so the conventions hold whether the change came from a person or from Claude Code.
 
+It also installs the FSAC quality tooling: the `test`, `analyze`, `format` and `refactor` composer scripts along with the packages and configuration they rely on.
+
 > ⚠️ This package has not yet reached v1 and may introduce breaking changes between releases. Pin to a specific version.
 
 ## Installation
@@ -26,6 +28,23 @@ composer require --dev fsac/agent-extras "0.1.0"
 ```
 
 The service provider is registered through Laravel package discovery, so the Artisan commands the hooks rely on are available straight away.
+
+## Quality tooling
+
+Run the install command to add the composer scripts and set up their tools:
+
+```bash
+php artisan agent-extras:install
+```
+
+It makes the following changes to the project:
+
+- Adds the `test`, `analyze`, `format` and `refactor` composer scripts, which run PHPUnit, PHPStan (via Larastan), Pint and Rector respectively. Scripts the project already defines are left alone.
+- Adds the `vcs` repository entry for `fsac/rector-extras`, the FSAC Rector rules, which is not available on Packagist.
+- Requires `phpunit/phpunit`, `larastan/larastan`, `laravel/pint`, `rector/rector` and `fsac/rector-extras` as dev dependencies, skipping any already present.
+- Publishes a `phpstan.neon` and a `rector.php` tuned for a Laravel application. Existing files are left alone. Pint and PHPUnit use the configuration a Laravel application already ships with.
+
+Pass `--force` to overwrite existing scripts and configuration files, and `--composer` with the path to a Composer binary if `composer` is not on the `PATH`.
 
 ## Git hooks
 
@@ -62,7 +81,11 @@ The published hooks are kept executable, so no `chmod` step is needed.
 
 ## Commands
 
-> ℹ️ The commands exist to serve the git hooks above and are not intended for general standalone use. Their arguments and output are shaped around what the hooks need and may change between releases without notice.
+> ℹ️ Apart from `agent-extras:install`, the commands exist to serve the git hooks above and are not intended for general standalone use. Their arguments and output are shaped around what the hooks need and may change between releases without notice.
+
+### `agent-extras:install`
+
+Adds the `test`, `analyze`, `format` and `refactor` composer scripts and installs and configures their dependencies, as described under [Quality tooling](#quality-tooling). Accepts `--force` and `--composer=<path>`.
 
 ### `agent-extras:validate-branch [branch]`
 

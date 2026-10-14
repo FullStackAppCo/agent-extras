@@ -7,6 +7,7 @@ namespace FullStackAppCo\AgentExtras;
 use FullStackAppCo\AgentExtras\Console\Commands\Git\FormatCommitMessageCommand;
 use FullStackAppCo\AgentExtras\Console\Commands\Git\ValidateBranchCommand;
 use FullStackAppCo\AgentExtras\Console\Commands\Git\ValidateTagCommand;
+use FullStackAppCo\AgentExtras\Console\Commands\InstallCommand;
 use Illuminate\Foundation\Events\VendorTagPublished;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
@@ -24,6 +25,7 @@ class ServiceProvider extends BaseServiceProvider
 
         $this->commands([
             FormatCommitMessageCommand::class,
+            InstallCommand::class,
             ValidateBranchCommand::class,
             ValidateTagCommand::class,
         ]);
