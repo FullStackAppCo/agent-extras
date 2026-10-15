@@ -24,7 +24,7 @@ As an internal tool this package is not currently available on Packagist. To ins
 Then require the package:
 
 ```bash
-composer require --dev fsac/agent-extras "0.1.2"
+composer require --dev fsac/agent-extras "0.1.3"
 ```
 
 The service provider is registered through Laravel package discovery, so the Artisan commands the hooks rely on are available straight away.
