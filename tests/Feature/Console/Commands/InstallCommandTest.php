@@ -18,10 +18,18 @@ class InstallCommandTest extends TestCase
 {
     protected string $project;
 
+    /**
+     * Where the git hooks publish to, which is fixed to the Testbench
+     * skeleton when the service provider boots.
+     */
+    protected string $hooks;
+
     #[Override]
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->hooks = $this->app->basePath('.githooks');
 
         $this->project = sys_get_temp_dir().'/agent-extras-'.Str::random();
 
@@ -36,6 +44,7 @@ class InstallCommandTest extends TestCase
     protected function tearDown(): void
     {
         File::deleteDirectory($this->project);
+        File::deleteDirectory($this->hooks);
 
         parent::tearDown();
     }
@@ -60,61 +69,111 @@ class InstallCommandTest extends TestCase
             'format' => ['@php vendor/bin/pint'],
             'refactor' => ['@php vendor/bin/rector process'],
             'test' => ['@php vendor/bin/phpunit -d memory_limit=2G'],
-            'post-install-cmd' => [
-                '@php artisan vendor:publish --tag=githooks --force',
-                'git config core.hooksPath .githooks || true',
-            ],
+            'post-install-cmd' => ['git config core.hooksPath .githooks || true'],
+            'post-update-cmd' => ['@php artisan vendor:publish --tag=githooks --force'],
         ], $this->readComposer('scripts'));
     }
 
     #[Test]
-    public function it_appends_the_git_hook_entries_to_an_existing_post_install_script(): void
+    public function it_appends_the_git_hook_entries_to_existing_post_install_and_post_update_scripts(): void
     {
         $this->writeComposer(['scripts' => [
-            'post-install-cmd' => ['@php artisan storage:link', 'git config core.hooksPath .githooks || true'],
+            'post-install-cmd' => ['@php artisan storage:link'],
+            'post-update-cmd' => ['@php artisan boost:update --ansi'],
         ]]);
 
         $this->artisan('agent-extras:install')
             ->expectsOutputToContain("Added the git hook entries to the 'post-install-cmd' composer script.")
+            ->expectsOutputToContain("Added the git hook entries to the 'post-update-cmd' composer script.")
             ->assertSuccessful();
 
         $this->assertSame([
             '@php artisan storage:link',
             'git config core.hooksPath .githooks || true',
-            '@php artisan vendor:publish --tag=githooks --force',
         ], $this->readComposer('scripts.post-install-cmd'));
+
+        $this->assertSame([
+            '@php artisan boost:update --ansi',
+            '@php artisan vendor:publish --tag=githooks --force',
+        ], $this->readComposer('scripts.post-update-cmd'));
     }
 
     #[Test]
-    public function it_appends_the_git_hook_entries_to_a_single_post_install_script(): void
+    public function it_appends_the_git_hook_entries_to_single_post_install_and_post_update_scripts(): void
     {
-        $this->writeComposer(['scripts' => ['post-install-cmd' => '@php artisan storage:link']]);
+        $this->writeComposer(['scripts' => [
+            'post-install-cmd' => '@php artisan storage:link',
+            'post-update-cmd' => '@php artisan boost:update --ansi',
+        ]]);
 
         $this->artisan('agent-extras:install')->assertSuccessful();
 
         $this->assertSame([
             '@php artisan storage:link',
-            '@php artisan vendor:publish --tag=githooks --force',
             'git config core.hooksPath .githooks || true',
         ], $this->readComposer('scripts.post-install-cmd'));
+
+        $this->assertSame([
+            '@php artisan boost:update --ansi',
+            '@php artisan vendor:publish --tag=githooks --force',
+        ], $this->readComposer('scripts.post-update-cmd'));
     }
 
     #[Test]
-    public function it_keeps_a_post_install_script_which_already_has_the_git_hook_entries(): void
+    public function it_keeps_post_install_and_post_update_scripts_which_already_have_the_git_hook_entries(): void
     {
-        $this->writeComposer(['scripts' => ['post-install-cmd' => [
-            '@php artisan vendor:publish --tag=githooks --force',
-            'git config core.hooksPath .githooks || true',
-        ]]]);
+        $this->writeComposer(['scripts' => [
+            'post-install-cmd' => ['git config core.hooksPath .githooks || true'],
+            'post-update-cmd' => ['@php artisan vendor:publish --tag=githooks --force'],
+        ]]);
 
         $this->artisan('agent-extras:install')
             ->expectsOutputToContain("Skipped the git hook entries already in the 'post-install-cmd' composer script.")
+            ->expectsOutputToContain("Skipped the git hook entries already in the 'post-update-cmd' composer script.")
             ->assertSuccessful();
 
-        $this->assertSame([
-            '@php artisan vendor:publish --tag=githooks --force',
-            'git config core.hooksPath .githooks || true',
-        ], $this->readComposer('scripts.post-install-cmd'));
+        $this->assertSame(['git config core.hooksPath .githooks || true'], $this->readComposer('scripts.post-install-cmd'));
+        $this->assertSame(['@php artisan vendor:publish --tag=githooks --force'], $this->readComposer('scripts.post-update-cmd'));
+    }
+
+    #[Test]
+    public function it_publishes_the_git_hooks(): void
+    {
+        $this->writeComposer();
+
+        $this->artisan('agent-extras:install')
+            ->expectsOutputToContain('Published the git hooks.')
+            ->assertSuccessful();
+
+        $this->assertFileEquals(__DIR__.'/../../../../resources/githooks/pre-push', "{$this->hooks}/pre-push");
+    }
+
+    #[Test]
+    public function it_sets_the_git_hooks_path(): void
+    {
+        $this->writeComposer();
+
+        $this->artisan('agent-extras:install')
+            ->expectsOutputToContain("Set git's core.hooksPath to '.githooks'.")
+            ->assertSuccessful();
+
+        Process::assertRan(fn (PendingProcess $process): bool => $process->command === [
+            'git', 'config', 'core.hooksPath', '.githooks',
+        ] && $process->path === $this->project);
+    }
+
+    #[Test]
+    public function it_warns_when_the_git_hooks_path_cannot_be_set(): void
+    {
+        Process::fake(fn (PendingProcess $process): FakeProcessResult => Process::result(
+            exitCode: $process->command[0] === 'git' ? 128 : 0,
+        ));
+
+        $this->writeComposer();
+
+        $this->artisan('agent-extras:install')
+            ->expectsOutputToContain("Unable to set git's core.hooksPath to '.githooks' (is the project a git repository?).")
+            ->assertSuccessful();
     }
 
     #[Test]
@@ -226,7 +285,7 @@ class InstallCommandTest extends TestCase
             ->expectsOutputToContain('The dependencies are already required.')
             ->assertSuccessful();
 
-        Process::assertNothingRan();
+        Process::assertDidntRun(fn (PendingProcess $process): bool => $process->command[1] === 'require');
     }
 
     #[Test]

@@ -12,6 +12,7 @@ use FullStackAppCo\AgentExtras\Exceptions\ScriptAlreadyRegistered;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 
 class InstallCommand extends Command
 {
@@ -29,8 +30,14 @@ class InstallCommand extends Command
      * @var list<string>
      */
     protected const array POST_INSTALL_SCRIPTS = [
-        '@php artisan vendor:publish --tag=githooks --force',
         'git config core.hooksPath .githooks || true',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    protected const array POST_UPDATE_SCRIPTS = [
+        '@php artisan vendor:publish --tag=githooks --force',
     ];
 
     /**
@@ -87,6 +94,7 @@ class InstallCommand extends Command
         $io->write($composer);
 
         $this->publishConfiguration();
+        $this->enableHooks();
 
         $this->info('Agent extras installed.');
 
@@ -140,15 +148,38 @@ class InstallCommand extends Command
     protected function addHookScripts(array $composer): array
     {
         $manager = new ScriptManager($composer);
-        $appended = $manager->append('post-install-cmd', self::POST_INSTALL_SCRIPTS);
 
-        if ($appended === []) {
-            $this->warn("Skipped the git hook entries already in the 'post-install-cmd' composer script.");
-        } else {
-            $this->info("Added the git hook entries to the 'post-install-cmd' composer script.");
-        }
+        Collection::make([
+            'post-install-cmd' => self::POST_INSTALL_SCRIPTS,
+            'post-update-cmd' => self::POST_UPDATE_SCRIPTS,
+        ])->each(function (array $scripts, string $event) use ($manager): void {
+            if ($manager->append($event, $scripts) === []) {
+                $this->warn("Skipped the git hook entries already in the '{$event}' composer script.");
+            } else {
+                $this->info("Added the git hook entries to the '{$event}' composer script.");
+            }
+        });
 
         return $manager->toArray();
+    }
+
+    /**
+     * Publish the git hooks and point git at them, as the composer scripts
+     * would, so the hooks work without another composer install or update.
+     */
+    protected function enableHooks(): void
+    {
+        $this->callSilently('vendor:publish', ['--tag' => 'githooks', '--force' => true]);
+
+        $this->info('Published the git hooks.');
+
+        $result = Process::path($this->laravel->basePath())->run(['git', 'config', 'core.hooksPath', '.githooks']);
+
+        if ($result->successful()) {
+            $this->info("Set git's core.hooksPath to '.githooks'.");
+        } else {
+            $this->warn("Unable to set git's core.hooksPath to '.githooks' (is the project a git repository?).");
+        }
     }
 
     /**
