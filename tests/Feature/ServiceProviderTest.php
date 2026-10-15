@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use FullStackAppCo\AgentExtras\ServiceProvider;
+use Illuminate\Config\Repository;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Override;
@@ -19,6 +22,29 @@ class ServiceProviderTest extends TestCase
         File::deleteDirectory($this->app->basePath('.githooks'));
 
         parent::tearDown();
+    }
+
+    #[Test]
+    public function it_registers_validation_when_the_host_does_not_provide_it(): void
+    {
+        // A bare application with only config and a filesystem, like Laravel Zero.
+        $app = new Application($this->app->basePath());
+        $app->instance('config', new Repository);
+        $app->instance('files', new Filesystem);
+
+        new ServiceProvider($app)->register();
+
+        $this->assertTrue($app->make('validator')->make(['tag' => 'v1.0.0'], ['tag' => 'regex:/^v/'])->passes());
+    }
+
+    #[Test]
+    public function it_keeps_the_validator_the_host_provides(): void
+    {
+        $validator = $this->app->make('validator');
+
+        $this->app->register(ServiceProvider::class, force: true);
+
+        $this->assertSame($validator, $this->app->make('validator'));
     }
 
     #[Test]
