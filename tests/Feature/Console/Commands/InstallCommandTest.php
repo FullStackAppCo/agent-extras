@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Console\Commands;
 
+use FullStackAppCo\AgentExtras\Composer\JsonIo;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -62,7 +63,7 @@ class InstallCommandTest extends TestCase
                 '@php artisan vendor:publish --tag=githooks --force',
                 'git config core.hooksPath .githooks || true',
             ],
-        ], $this->readComposer()['scripts']);
+        ], $this->readComposer('scripts'));
     }
 
     #[Test]
@@ -80,7 +81,7 @@ class InstallCommandTest extends TestCase
             '@php artisan storage:link',
             'git config core.hooksPath .githooks || true',
             '@php artisan vendor:publish --tag=githooks --force',
-        ], $this->readComposer()['scripts']['post-install-cmd']);
+        ], $this->readComposer('scripts.post-install-cmd'));
     }
 
     #[Test]
@@ -94,7 +95,7 @@ class InstallCommandTest extends TestCase
             '@php artisan storage:link',
             '@php artisan vendor:publish --tag=githooks --force',
             'git config core.hooksPath .githooks || true',
-        ], $this->readComposer()['scripts']['post-install-cmd']);
+        ], $this->readComposer('scripts.post-install-cmd'));
     }
 
     #[Test]
@@ -112,7 +113,7 @@ class InstallCommandTest extends TestCase
         $this->assertSame([
             '@php artisan vendor:publish --tag=githooks --force',
             'git config core.hooksPath .githooks || true',
-        ], $this->readComposer()['scripts']['post-install-cmd']);
+        ], $this->readComposer('scripts.post-install-cmd'));
     }
 
     #[Test]
@@ -124,7 +125,7 @@ class InstallCommandTest extends TestCase
             ->expectsOutputToContain("Skipped the existing 'test' composer script (use --force to overwrite).")
             ->assertSuccessful();
 
-        $scripts = $this->readComposer()['scripts'];
+        $scripts = $this->readComposer('scripts');
 
         $this->assertSame(['@php artisan test'], $scripts['test']);
         $this->assertSame(['@php vendor/bin/pint'], $scripts['format']);
@@ -139,7 +140,7 @@ class InstallCommandTest extends TestCase
             ->expectsOutputToContain("Added the 'test' composer script.")
             ->assertSuccessful();
 
-        $this->assertSame(['@php vendor/bin/phpunit -d memory_limit=2G'], $this->readComposer()['scripts']['test']);
+        $this->assertSame(['@php vendor/bin/phpunit -d memory_limit=2G'], $this->readComposer('scripts.test'));
     }
 
     #[Test]
@@ -153,7 +154,7 @@ class InstallCommandTest extends TestCase
 
         $this->assertSame(
             [['name' => 'rector-extras', 'type' => 'vcs', 'url' => 'https://gitlab.com/fullstackappco/rector-extras.git']],
-            $this->readComposer()['repositories'],
+            $this->readComposer('repositories'),
         );
     }
 
@@ -169,7 +170,7 @@ class InstallCommandTest extends TestCase
             ->doesntExpectOutputToContain('Added the rector-extras repository.')
             ->assertSuccessful();
 
-        $this->assertCount(2, $this->readComposer()['repositories']);
+        $this->assertCount(2, $this->readComposer('repositories'));
     }
 
     #[Test]
@@ -290,14 +291,17 @@ class InstallCommandTest extends TestCase
      */
     protected function writeComposer(array $composer = []): void
     {
-        File::put("{$this->project}/composer.json", json_encode(['name' => 'acme/app', ...$composer], JSON_PRETTY_PRINT));
+        new JsonIo("{$this->project}/composer.json")->write(['name' => 'acme/app', ...$composer]);
     }
 
     /**
-     * @return array<string, mixed>
+     * Read the project's composer.json, optionally extracting the value at
+     * the given dot-notation path.
      */
-    protected function readComposer(): array
+    protected function readComposer(?string $path = null): mixed
     {
-        return json_decode(File::get("{$this->project}/composer.json"), true, flags: JSON_THROW_ON_ERROR);
+        $composer = new JsonIo("{$this->project}/composer.json")->read();
+
+        return $path === null ? $composer : data_get($composer, $path);
     }
 }
