@@ -29,3 +29,48 @@ qa:
     - composer analyze
     - composer dump-autoload --strict-psr --optimize --dry-run
     - composer test
+
+# Install the package into fresh Laravel and Laravel Zero projects and run the
+# install command and the composer scripts it adds. Only on the default branch,
+# as each project is created from scratch.
+install:
+  image: php:8.4-cli
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  needs:
+    - qa
+  parallel:
+    matrix:
+      - SKELETON: laravel/laravel
+        CONSOLE: artisan
+      - SKELETON: laravel-zero/laravel-zero
+        CONSOLE: application
+  variables:
+    COMPOSER_CACHE_DIR: $CI_PROJECT_DIR/.composer-cache
+    PROJECT_DIR: /tmp/project
+  cache:
+    key: install-${CONSOLE}
+    paths:
+      - .composer-cache
+  before_script:
+    - apt-get update -yqq && apt-get install -yqq git unzip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+  script:
+    - composer create-project "$SKELETON" "$PROJECT_DIR" --no-interaction --no-progress --prefer-dist
+    - cd "$PROJECT_DIR"
+    - git init -q
+    - composer config repositories.agent-extras path "$CI_PROJECT_DIR"
+    - composer require --dev "fsac/agent-extras:*" --no-interaction --no-progress
+    # Laravel Zero ignores package discovery, so the provider is registered by hand.
+    - |
+      if [ ! -f artisan ]; then
+          sed -i 's/AppServiceProvider::class,/&\n        \\FullStackAppCo\\AgentExtras\\ServiceProvider::class,/' config/app.php
+      fi
+    # An unknown command can exit 0 (Laravel Zero prints its summary), so check it exists first.
+    - php "$CONSOLE" list --raw | grep -q '^agent-extras:install '
+    - php "$CONSOLE" agent-extras:install --no-interaction
+    - composer run-script post-install-cmd
+    - composer run-script post-update-cmd
+    - test -x .githooks/pre-push
+    - test "$(git config core.hooksPath)" = .githooks
+    - grep -q "@php $CONSOLE vendor:publish --tag=githooks --force" composer.json
