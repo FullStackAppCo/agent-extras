@@ -21,6 +21,7 @@ class ServiceProviderTest extends TestCase
     {
         File::deleteDirectory($this->app->basePath('.githooks'));
         File::deleteDirectory($this->app->basePath('.claude'));
+        File::delete([$this->app->basePath('phpstan.neon'), $this->app->basePath('rector.php')]);
 
         parent::tearDown();
     }
@@ -109,5 +110,40 @@ class ServiceProviderTest extends TestCase
         $this->artisan('vendor:publish', ['--tag' => 'skills'])->assertSuccessful();
 
         $this->assertDirectoryDoesNotExist($this->app->basePath('.claude/skills/update-guidelines'));
+    }
+
+    #[Test]
+    public function it_publishes_the_configuration_files_for_the_project(): void
+    {
+        $this->artisan('vendor:publish', ['--tag' => 'config'])->assertSuccessful();
+
+        $this->assertStringContainsString(<<<'NEON'
+                paths:
+                    - app/
+                    - bootstrap/
+                    - config/
+                    - database/
+                    - routes/
+                    - tests/
+
+            NEON, File::get($this->app->basePath('phpstan.neon')));
+
+        $this->assertStringContainsString(<<<'PHP'
+                ->withSkip([
+                    __DIR__.'/bootstrap/cache',
+                    ClosureToArrowFunctionRector::class,
+                ])
+            PHP, File::get($this->app->basePath('rector.php')));
+    }
+
+    #[Test]
+    public function it_keeps_existing_configuration_files_when_publishing(): void
+    {
+        File::put($this->app->basePath('rector.php'), '<?php return [];');
+
+        $this->artisan('vendor:publish', ['--tag' => 'config'])->assertSuccessful();
+
+        $this->assertStringEqualsFile($this->app->basePath('rector.php'), '<?php return [];');
+        $this->assertStringNotContainsString('{{', File::get($this->app->basePath('phpstan.neon')));
     }
 }

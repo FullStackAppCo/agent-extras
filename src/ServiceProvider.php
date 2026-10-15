@@ -20,6 +20,8 @@ class ServiceProvider extends BaseServiceProvider
 {
     protected const string HOOKS_TAG = 'githooks';
 
+    protected const string CONFIG_TAG = 'config';
+
     public const string SKILLS_TAG = 'skills';
 
     /**
@@ -61,10 +63,11 @@ class ServiceProvider extends BaseServiceProvider
         $this->publishes([
             __DIR__.'/../resources/githooks' => $this->app->basePath('.githooks'),
         ], self::HOOKS_TAG);
-
         $this->publishes($this->skillPaths(), self::SKILLS_TAG);
+        $this->publishes($this->configPaths(), self::CONFIG_TAG);
 
         Event::listen(VendorTagPublished::class, $this->restoreHookPermissions(...));
+        Event::listen(VendorTagPublished::class, $this->renderConfiguration(...));
     }
 
     /**
@@ -83,6 +86,38 @@ class ServiceProvider extends BaseServiceProvider
                 $source => $this->app->basePath('.claude/skills/'.basename($source)),
             ])
             ->all();
+    }
+
+    /**
+     * Each configuration stub mapped to its configuration file in the project.
+     *
+     * @return array<string, string>
+     */
+    protected function configPaths(): array
+    {
+        return Collection::make(ConfigurationStubs::FILES)
+            ->mapWithKeys(fn (string $file): array => [ConfigurationStubs::stub($file) => $this->app->basePath($file)])
+            ->all();
+    }
+
+    /**
+     * Publishing copies the stubs verbatim, so fill in the directories the
+     * configuration covers. Only files still matching their stub are freshly
+     * published; any others the project already had are left alone.
+     */
+    protected function renderConfiguration(VendorTagPublished $event): void
+    {
+        if ($event->tag !== self::CONFIG_TAG) {
+            return;
+        }
+
+        $stubs = new ConfigurationStubs($this->app->basePath());
+
+        foreach ($event->paths as $from => $to) {
+            if (File::isFile($to) && File::get($to) === File::get($from)) {
+                File::put($to, $stubs->render(basename($to)));
+            }
+        }
     }
 
     /**
