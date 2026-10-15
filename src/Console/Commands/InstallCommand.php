@@ -27,6 +27,14 @@ class InstallCommand extends Command
     ];
 
     /**
+     * @var list<string>
+     */
+    protected const array POST_INSTALL_SCRIPTS = [
+        '@php artisan vendor:publish --tag=githooks --force',
+        'git config core.hooksPath .githooks || true',
+    ];
+
+    /**
      * @var array<string, string>
      */
     protected const array PACKAGES = [
@@ -48,7 +56,7 @@ class InstallCommand extends Command
         {--force : Overwrite existing composer scripts and configuration files}';
 
     #[Override]
-    protected $description = 'Add the test, analyze, format and refactor composer scripts, installing and configuring their dependencies.';
+    protected $description = 'Add the test, analyze, format and refactor composer scripts, installing and configuring their dependencies, and enable the git hooks.';
 
     public function handle(): int
     {
@@ -75,6 +83,7 @@ class InstallCommand extends Command
         $io->read()
             |> $this->addRepositories(...)
             |> $this->addScripts(...)
+            |> $this->addHookScripts(...)
             |> $io->write(...);
 
         $this->publishConfiguration();
@@ -120,6 +129,24 @@ class InstallCommand extends Command
                 $this->warn("Skipped the existing '{$name}' composer script (use --force to overwrite).");
             }
         });
+
+        return $manager->toArray();
+    }
+
+    /**
+     * @param  array<string, mixed>  $composer
+     * @return array<string, mixed>
+     */
+    protected function addHookScripts(array $composer): array
+    {
+        $manager = new ScriptManager($composer);
+        $appended = $manager->append('post-install-cmd', self::POST_INSTALL_SCRIPTS);
+
+        if ($appended === []) {
+            $this->warn("Skipped the git hook entries already in the 'post-install-cmd' composer script.");
+        } else {
+            $this->info("Added the git hook entries to the 'post-install-cmd' composer script.");
+        }
 
         return $manager->toArray();
     }

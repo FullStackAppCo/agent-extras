@@ -33,6 +33,25 @@ class ScriptManager
     }
 
     /**
+     * Append the given entries to a script, creating it if necessary and
+     * leaving out any entries the script already lists.
+     *
+     * @param  list<string>  $scripts
+     * @return list<string> The entries which were appended
+     */
+    public function append(string $name, array $scripts): array
+    {
+        $existing = (array) ($this->composer['scripts'][$name] ?? []);
+        $missing = array_values(array_diff($scripts, $existing));
+
+        if ($missing !== []) {
+            data_set($this->composer, "scripts.$name", [...$existing, ...$missing]);
+        }
+
+        return $missing;
+    }
+
+    /**
      * Array representation of composer.json including any added scripts.
      */
     public function toArray(): array

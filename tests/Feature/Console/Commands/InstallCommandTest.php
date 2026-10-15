@@ -58,7 +58,61 @@ class InstallCommandTest extends TestCase
             'format' => ['@php vendor/bin/pint'],
             'refactor' => ['@php vendor/bin/rector process'],
             'test' => ['@php vendor/bin/phpunit -d memory_limit=2G'],
+            'post-install-cmd' => [
+                '@php artisan vendor:publish --tag=githooks --force',
+                'git config core.hooksPath .githooks || true',
+            ],
         ], $this->readComposer()['scripts']);
+    }
+
+    #[Test]
+    public function it_appends_the_git_hook_entries_to_an_existing_post_install_script(): void
+    {
+        $this->writeComposer(['scripts' => [
+            'post-install-cmd' => ['@php artisan storage:link', 'git config core.hooksPath .githooks || true'],
+        ]]);
+
+        $this->artisan('agent-extras:install')
+            ->expectsOutputToContain("Added the git hook entries to the 'post-install-cmd' composer script.")
+            ->assertSuccessful();
+
+        $this->assertSame([
+            '@php artisan storage:link',
+            'git config core.hooksPath .githooks || true',
+            '@php artisan vendor:publish --tag=githooks --force',
+        ], $this->readComposer()['scripts']['post-install-cmd']);
+    }
+
+    #[Test]
+    public function it_appends_the_git_hook_entries_to_a_single_post_install_script(): void
+    {
+        $this->writeComposer(['scripts' => ['post-install-cmd' => '@php artisan storage:link']]);
+
+        $this->artisan('agent-extras:install')->assertSuccessful();
+
+        $this->assertSame([
+            '@php artisan storage:link',
+            '@php artisan vendor:publish --tag=githooks --force',
+            'git config core.hooksPath .githooks || true',
+        ], $this->readComposer()['scripts']['post-install-cmd']);
+    }
+
+    #[Test]
+    public function it_keeps_a_post_install_script_which_already_has_the_git_hook_entries(): void
+    {
+        $this->writeComposer(['scripts' => ['post-install-cmd' => [
+            '@php artisan vendor:publish --tag=githooks --force',
+            'git config core.hooksPath .githooks || true',
+        ]]]);
+
+        $this->artisan('agent-extras:install')
+            ->expectsOutputToContain("Skipped the git hook entries already in the 'post-install-cmd' composer script.")
+            ->assertSuccessful();
+
+        $this->assertSame([
+            '@php artisan vendor:publish --tag=githooks --force',
+            'git config core.hooksPath .githooks || true',
+        ], $this->readComposer()['scripts']['post-install-cmd']);
     }
 
     #[Test]

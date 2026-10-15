@@ -2,7 +2,7 @@
 
 Git hooks that enforce the FSAC git conventions in Laravel projects worked on by coding agents, backed by Artisan commands. Each hook validates a branch, tag or commit message against the convention and prints a descriptive error that tells the agent (or human) exactly how to fix it, so the conventions hold whether the change came from a person or from Claude Code.
 
-It also installs the FSAC quality tooling: the `test`, `analyze`, `format` and `refactor` composer scripts along with the packages and configuration they rely on.
+It also installs the FSAC quality tooling: the `test`, `analyze`, `format` and `refactor` composer scripts along with the packages and configuration they rely on, and wires the git hooks into `composer install`.
 
 > ⚠️ This package has not yet reached v1 and may introduce breaking changes between releases. Pin to a specific version.
 
@@ -31,7 +31,7 @@ The service provider is registered through Laravel package discovery, so the Art
 
 ## Quality tooling
 
-Run the install command to add the composer scripts and set up their tools:
+Run the install command to add the composer scripts, set up their tools and enable the git hooks:
 
 ```bash
 php artisan agent-extras:install
@@ -43,6 +43,7 @@ It makes the following changes to the project:
 - Adds the `vcs` repository entry for `fsac/rector-extras`, the FSAC Rector rules, which is not available on Packagist.
 - Requires `phpunit/phpunit`, `larastan/larastan`, `laravel/pint`, `rector/rector` and `fsac/rector-extras` as dev dependencies, skipping any already present.
 - Publishes a `phpstan.neon` and a `rector.php` tuned for a Laravel application. Existing files are left alone. Pint and PHPUnit use the configuration a Laravel application already ships with.
+- Appends the `post-install-cmd` entries described under [Git hooks](#git-hooks), which publish and enable the hooks on every `composer install`. Entries the event already lists are left alone.
 
 Pass `--force` to overwrite existing scripts and configuration files, and `--composer` with the path to a Composer binary if `composer` is not on the `PATH`.
 
@@ -64,7 +65,7 @@ php artisan vendor:publish --provider="FullStackAppCo\AgentExtras\ServiceProvide
 - `pre-push` runs `agent-extras:validate-branch` and `agent-extras:validate-tag` for each ref being pushed, or for the current branch and all local tags when run manually from a terminal.
 - `lib.sh` is a shared helper the hooks source to find `artisan` via Herd, Sail or the host PHP.
 
-Each hook prints a descriptive error and exits non-zero when a name or message breaks the convention. Enable the hooks with `git config core.hooksPath .githooks`, typically from a composer script so every clone picks them up and stays current:
+Each hook prints a descriptive error and exits non-zero when a name or message breaks the convention. Enable the hooks with `git config core.hooksPath .githooks`, typically from a composer script so every clone picks them up and stays current. `agent-extras:install` adds these entries for you:
 
 ```json
 {
@@ -85,7 +86,7 @@ The published hooks are kept executable, so no `chmod` step is needed.
 
 ### `agent-extras:install`
 
-Adds the `test`, `analyze`, `format` and `refactor` composer scripts and installs and configures their dependencies, as described under [Quality tooling](#quality-tooling). Accepts `--force` and `--composer=<path>`.
+Adds the `test`, `analyze`, `format` and `refactor` composer scripts, installs and configures their dependencies and appends the `post-install-cmd` entries that enable the git hooks, as described under [Quality tooling](#quality-tooling). Accepts `--force` and `--composer=<path>`.
 
 ### `agent-extras:validate-branch [branch]`
 
