@@ -56,10 +56,11 @@ It makes the following changes to the project:
 - Adds the `vcs` repository entry for `fsac/rector-extras`, the FSAC Rector rules, which is not available on Packagist.
 - Requires `phpunit/phpunit`, `larastan/larastan`, `laravel/pint`, `rector/rector` and `fsac/rector-extras` as dev dependencies, skipping any already present.
 - Publishes a `phpstan.neon` and a `rector.php` covering the project's directories: `app`, `bootstrap`, `config`, `database`, `routes` and `tests` in a Laravel application, otherwise `app` (Laravel Zero) or `src` (a package) and `tests`. Existing files are left alone. Pint and PHPUnit use the configuration a Laravel application already ships with.
+- Copies the FSAC Claude Code skills (`branch`, `commit`, `release` and `tag`) into `.claude/skills` when the project is not a Laravel application, where Laravel Boost is not available to install them, and appends `@php artisan vendor:publish --tag=skills --force` to `post-update-cmd` so they are republished on every `composer update` (through the Laravel Zero binary where there is one). The install leaves existing skills alone, but the republish overwrites them, as it does the git hooks.
 - Publishes the git hooks into `.githooks` and points git's `core.hooksPath` at them.
 - Appends the `post-install-cmd` and `post-update-cmd` entries described under [Git hooks](#git-hooks), which enable the hooks on every `composer install` and republish them on every `composer update`. Entries the events already list are left alone.
 
-Pass `--force` to overwrite existing scripts and configuration files, and `--composer` with the path to a Composer binary if `composer` is not on the `PATH`.
+Pass `--force` to overwrite existing scripts, configuration files and skills, and `--composer` with the path to a Composer binary if `composer` is not on the `PATH`.
 
 ## Git hooks
 

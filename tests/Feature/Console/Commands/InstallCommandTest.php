@@ -70,7 +70,10 @@ class InstallCommandTest extends TestCase
             'refactor' => ['@php vendor/bin/rector process'],
             'test' => ['@php vendor/bin/phpunit -d memory_limit=2G'],
             'post-install-cmd' => ['git config core.hooksPath .githooks || true'],
-            'post-update-cmd' => ['@php artisan vendor:publish --tag=githooks --force'],
+            'post-update-cmd' => [
+                '@php artisan vendor:publish --tag=githooks --force',
+                '@php artisan vendor:publish --tag=skills --force',
+            ],
         ], $this->readComposer('scripts'));
     }
 
@@ -81,6 +84,7 @@ class InstallCommandTest extends TestCase
             'post-install-cmd' => ['@php artisan storage:link'],
             'post-update-cmd' => ['@php artisan boost:update --ansi'],
         ]]);
+        File::put("{$this->project}/artisan", '<?php');
 
         $this->artisan('agent-extras:install')
             ->expectsOutputToContain("Added the git hook entries to the 'post-install-cmd' composer script.")
@@ -105,6 +109,7 @@ class InstallCommandTest extends TestCase
             'post-install-cmd' => '@php artisan storage:link',
             'post-update-cmd' => '@php artisan boost:update --ansi',
         ]]);
+        File::put("{$this->project}/artisan", '<?php');
 
         $this->artisan('agent-extras:install')->assertSuccessful();
 
@@ -126,6 +131,7 @@ class InstallCommandTest extends TestCase
             'post-install-cmd' => ['git config core.hooksPath .githooks || true'],
             'post-update-cmd' => ['@php artisan vendor:publish --tag=githooks --force'],
         ]]);
+        File::put("{$this->project}/artisan", '<?php');
 
         $this->artisan('agent-extras:install')
             ->expectsOutputToContain("Skipped the git hook entries already in the 'post-install-cmd' composer script.")
@@ -144,10 +150,10 @@ class InstallCommandTest extends TestCase
 
         $this->artisan('agent-extras:install')->assertSuccessful();
 
-        $this->assertSame(
-            ['@php my-app vendor:publish --tag=githooks --force'],
-            $this->readComposer('scripts.post-update-cmd'),
-        );
+        $this->assertSame([
+            '@php my-app vendor:publish --tag=githooks --force',
+            '@php my-app vendor:publish --tag=skills --force',
+        ], $this->readComposer('scripts.post-update-cmd'));
     }
 
     #[Test]
@@ -438,6 +444,119 @@ class InstallCommandTest extends TestCase
             ->assertSuccessful();
 
         $this->assertStringContainsString('RectorConfig::configure()', File::get("{$this->project}/rector.php"));
+    }
+
+    #[Test]
+    public function it_publishes_the_skills_when_the_project_is_not_a_laravel_application(): void
+    {
+        $this->writeComposer();
+
+        $this->artisan('agent-extras:install')
+            ->expectsOutputToContain("Published the 'commit' skill.")
+            ->assertSuccessful();
+
+        $this->assertFileEquals(
+            __DIR__.'/../../../../resources/boost/skills/commit/SKILL.md',
+            "{$this->project}/.claude/skills/commit/SKILL.md",
+        );
+    }
+
+    #[Test]
+    public function it_does_not_publish_the_laravel_boost_skills(): void
+    {
+        $this->writeComposer();
+
+        $this->artisan('agent-extras:install')->assertSuccessful();
+
+        $this->assertDirectoryDoesNotExist("{$this->project}/.claude/skills/update-guidelines");
+    }
+
+    #[Test]
+    public function it_leaves_the_skills_to_laravel_boost_in_a_laravel_application(): void
+    {
+        $this->writeComposer();
+        File::put("{$this->project}/artisan", '<?php');
+
+        $this->artisan('agent-extras:install')
+            ->doesntExpectOutputToContain("Published the 'commit' skill.")
+            ->assertSuccessful();
+
+        $this->assertDirectoryDoesNotExist("{$this->project}/.claude/skills");
+    }
+
+    #[Test]
+    public function it_keeps_existing_skills(): void
+    {
+        $this->writeComposer();
+        File::ensureDirectoryExists("{$this->project}/.claude/skills/commit");
+        File::put("{$this->project}/.claude/skills/commit/SKILL.md", 'Custom');
+
+        $this->artisan('agent-extras:install')
+            ->expectsOutputToContain("Skipped the existing 'commit' skill (use --force to overwrite).")
+            ->expectsOutputToContain("Published the 'branch' skill.")
+            ->assertSuccessful();
+
+        $this->assertStringEqualsFile("{$this->project}/.claude/skills/commit/SKILL.md", 'Custom');
+    }
+
+    #[Test]
+    public function it_overwrites_existing_skills_when_forced(): void
+    {
+        $this->writeComposer();
+        File::ensureDirectoryExists("{$this->project}/.claude/skills/commit");
+        File::put("{$this->project}/.claude/skills/commit/SKILL.md", 'Custom');
+
+        $this->artisan('agent-extras:install', ['--force' => true])
+            ->expectsOutputToContain("Published the 'commit' skill.")
+            ->assertSuccessful();
+
+        $this->assertFileEquals(
+            __DIR__.'/../../../../resources/boost/skills/commit/SKILL.md',
+            "{$this->project}/.claude/skills/commit/SKILL.md",
+        );
+    }
+
+    #[Test]
+    public function it_republishes_the_skills_on_composer_update_when_the_project_is_not_a_laravel_application(): void
+    {
+        $this->writeComposer();
+
+        $this->artisan('agent-extras:install')
+            ->expectsOutputToContain("Added the skill entries to the 'post-update-cmd' composer script.")
+            ->assertSuccessful();
+
+        $this->assertContains('@php artisan vendor:publish --tag=skills --force', $this->readComposer('scripts.post-update-cmd'));
+    }
+
+    #[Test]
+    public function it_keeps_a_post_update_script_which_already_republishes_the_skills(): void
+    {
+        $this->writeComposer(['scripts' => [
+            'post-update-cmd' => ['@php artisan vendor:publish --tag=skills --force'],
+        ]]);
+
+        $this->artisan('agent-extras:install')
+            ->expectsOutputToContain("Skipped the skill entries already in the 'post-update-cmd' composer script.")
+            ->assertSuccessful();
+
+        $this->assertSame([
+            '@php artisan vendor:publish --tag=skills --force',
+            '@php artisan vendor:publish --tag=githooks --force',
+        ], $this->readComposer('scripts.post-update-cmd'));
+    }
+
+    #[Test]
+    public function it_does_not_republish_the_skills_on_composer_update_in_a_laravel_application(): void
+    {
+        $this->writeComposer();
+        File::put("{$this->project}/artisan", '<?php');
+
+        $this->artisan('agent-extras:install')->assertSuccessful();
+
+        $this->assertSame(
+            ['@php artisan vendor:publish --tag=githooks --force'],
+            $this->readComposer('scripts.post-update-cmd'),
+        );
     }
 
     #[Test]

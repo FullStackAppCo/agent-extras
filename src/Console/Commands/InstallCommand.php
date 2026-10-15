@@ -9,6 +9,7 @@ use FullStackAppCo\AgentExtras\Composer\PackageManager;
 use FullStackAppCo\AgentExtras\Composer\RepositoryManager;
 use FullStackAppCo\AgentExtras\Composer\ScriptManager;
 use FullStackAppCo\AgentExtras\Exceptions\ScriptAlreadyRegistered;
+use FullStackAppCo\AgentExtras\ServiceProvider;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -62,7 +63,7 @@ class InstallCommand extends Command
 
     protected $signature = 'agent-extras:install
         {--composer=global : Absolute path to the Composer binary which should be used to install packages}
-        {--force : Overwrite existing composer scripts and configuration files}';
+        {--force : Overwrite existing composer scripts, configuration files and skills}';
 
     protected $description = 'Add the test, analyze, format and refactor composer scripts, installing and configuring their dependencies, and enable the git hooks.';
 
@@ -94,10 +95,12 @@ class InstallCommand extends Command
 
         $composer = $this->addScripts($io->read());
         $composer = $this->addHookScripts($composer);
+        $composer = $this->addSkillScripts($composer);
 
         $io->write($composer);
 
         $this->publishConfiguration();
+        $this->publishSkills();
         $this->enableHooks();
 
         $this->info('Agent extras installed.');
@@ -163,6 +166,32 @@ class InstallCommand extends Command
                 $this->info("Added the git hook entries to the '{$event}' composer script.");
             }
         });
+
+        return $manager->toArray();
+    }
+
+    /**
+     * Republish the skills on every composer update so they stay current,
+     * unless the project is a Laravel application, where Laravel Boost
+     * looks after them.
+     *
+     * @param  array<string, mixed>  $composer
+     * @return array<string, mixed>
+     */
+    protected function addSkillScripts(array $composer): array
+    {
+        if ($this->isLaravel()) {
+            return $composer;
+        }
+
+        $manager = new ScriptManager($composer);
+        $tag = ServiceProvider::SKILLS_TAG;
+
+        if ($manager->append('post-update-cmd', ["@php {$this->entryPoint($composer)} vendor:publish --tag={$tag} --force"]) === []) {
+            $this->warn("Skipped the skill entries already in the 'post-update-cmd' composer script.");
+        } else {
+            $this->info("Added the skill entries to the 'post-update-cmd' composer script.");
+        }
 
         return $manager->toArray();
     }
@@ -242,6 +271,39 @@ class InstallCommand extends Command
 
             $this->info("Published '{$stub}'.");
         });
+    }
+
+    /**
+     * Copy the skills into the project's `.claude/skills` directory when the
+     * project is not a Laravel application, as only there does Laravel Boost
+     * install them. Keeps any skills the project already has unless --force
+     * is given.
+     */
+    protected function publishSkills(): void
+    {
+        if ($this->isLaravel()) {
+            return;
+        }
+
+        // The published paths resolve against the base path at boot, so only
+        // the sources are taken from the provider.
+        Collection::make(ServiceProvider::pathsToPublish(ServiceProvider::class, ServiceProvider::SKILLS_TAG))
+            ->keys()
+            ->each(function (string $source): void {
+                $skill = basename($source);
+                $target = $this->laravel->basePath(".claude/skills/{$skill}");
+
+                if (File::exists($target) && ! $this->option('force')) {
+                    $this->warn("Skipped the existing '{$skill}' skill (use --force to overwrite).");
+
+                    return;
+                }
+
+                File::deleteDirectory($target);
+                File::copyDirectory($source, $target);
+
+                $this->info("Published the '{$skill}' skill.");
+            });
     }
 
     /**
