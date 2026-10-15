@@ -9,6 +9,7 @@ use FullStackAppCo\AgentExtras\Console\Commands\Git\ValidateBranchCommand;
 use FullStackAppCo\AgentExtras\Console\Commands\Git\ValidateTagCommand;
 use FullStackAppCo\AgentExtras\Console\Commands\InstallCommand;
 use Illuminate\Foundation\Events\VendorTagPublished;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
@@ -18,6 +19,15 @@ use Illuminate\Validation\ValidationServiceProvider;
 class ServiceProvider extends BaseServiceProvider
 {
     protected const string HOOKS_TAG = 'githooks';
+
+    public const string SKILLS_TAG = 'skills';
+
+    /**
+     * The skills which only make sense alongside Laravel Boost.
+     *
+     * @var list<string>
+     */
+    protected const array BOOST_SKILLS = ['update-guidelines'];
 
     /**
      * The git commands validate through the Validator facade, which Laravel
@@ -52,7 +62,27 @@ class ServiceProvider extends BaseServiceProvider
             __DIR__.'/../resources/githooks' => $this->app->basePath('.githooks'),
         ], self::HOOKS_TAG);
 
+        $this->publishes($this->skillPaths(), self::SKILLS_TAG);
+
         Event::listen(VendorTagPublished::class, $this->restoreHookPermissions(...));
+    }
+
+    /**
+     * Each skill's directory mapped to its place in the project's Claude Code
+     * skills. Laravel Boost installs the skills in a Laravel application, so
+     * these are for projects without it, which have no use for the skills
+     * that drive Boost itself.
+     *
+     * @return array<string, string>
+     */
+    protected function skillPaths(): array
+    {
+        return Collection::make(File::directories(__DIR__.'/../resources/boost/skills'))
+            ->reject(fn (string $source): bool => in_array(basename($source), self::BOOST_SKILLS, true))
+            ->mapWithKeys(fn (string $source): array => [
+                $source => $this->app->basePath('.claude/skills/'.basename($source)),
+            ])
+            ->all();
     }
 
     /**

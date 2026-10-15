@@ -20,6 +20,7 @@ class ServiceProviderTest extends TestCase
     protected function tearDown(): void
     {
         File::deleteDirectory($this->app->basePath('.githooks'));
+        File::deleteDirectory($this->app->basePath('.claude'));
 
         parent::tearDown();
     }
@@ -87,5 +88,26 @@ class ServiceProviderTest extends TestCase
         $this->assertFileExists($this->app->basePath('.githooks/commit-msg'));
         $this->assertFileExists($this->app->basePath('.githooks/pre-push'));
         $this->assertFileExists($this->app->basePath('.githooks/lib.sh'));
+    }
+
+    #[Test]
+    public function it_publishes_the_skills(): void
+    {
+        $this->artisan('vendor:publish', ['--tag' => 'skills'])->assertSuccessful();
+
+        foreach (['branch', 'commit', 'release', 'tag'] as $skill) {
+            $this->assertFileEquals(
+                __DIR__."/../../resources/boost/skills/{$skill}/SKILL.md",
+                $this->app->basePath(".claude/skills/{$skill}/SKILL.md"),
+            );
+        }
+    }
+
+    #[Test]
+    public function it_does_not_publish_the_laravel_boost_skills(): void
+    {
+        $this->artisan('vendor:publish', ['--tag' => 'skills'])->assertSuccessful();
+
+        $this->assertDirectoryDoesNotExist($this->app->basePath('.claude/skills/update-guidelines'));
     }
 }
