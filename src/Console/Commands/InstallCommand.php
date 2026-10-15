@@ -66,6 +66,10 @@ class InstallCommand extends Command
         }
 
         $io = new JsonIo($path);
+
+        // Composer can only resolve fsac/rector-extras once its repository is registered.
+        $io->write($this->addRepositories($io->read()));
+
         $packages = new PackageManager($this->option('composer'), $io->read())
             ->output(function (string $type, string $output): void {
                 $this->output->write($output);
@@ -77,8 +81,7 @@ class InstallCommand extends Command
             return self::FAILURE;
         }
 
-        $composer = $this->addRepositories($io->read());
-        $composer = $this->addScripts($composer);
+        $composer = $this->addScripts($io->read());
         $composer = $this->addHookScripts($composer);
 
         $io->write($composer);

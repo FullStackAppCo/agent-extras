@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Console\Commands;
 
 use FullStackAppCo\AgentExtras\Composer\JsonIo;
+use Illuminate\Process\FakeProcessResult;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -156,6 +157,25 @@ class InstallCommandTest extends TestCase
             [['name' => 'rector-extras', 'type' => 'vcs', 'url' => 'https://gitlab.com/fullstackappco/rector-extras.git']],
             $this->readComposer('repositories'),
         );
+    }
+
+    #[Test]
+    public function it_adds_the_rector_extras_repository_before_requiring_the_dependencies(): void
+    {
+        $this->writeComposer();
+
+        Process::fake(function (): FakeProcessResult {
+            $this->assertSame(
+                [['name' => 'rector-extras', 'type' => 'vcs', 'url' => 'https://gitlab.com/fullstackappco/rector-extras.git']],
+                $this->readComposer('repositories'),
+            );
+
+            return Process::result();
+        });
+
+        $this->artisan('agent-extras:install')->assertSuccessful();
+
+        Process::assertRanTimes(fn (PendingProcess $process): bool => $process->command[1] === 'require', 1);
     }
 
     #[Test]
