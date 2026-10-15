@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Override;
 
 class FormatCommitMessageCommand extends Command
 {
@@ -30,11 +29,9 @@ class FormatCommitMessageCommand extends Command
      */
     protected const string CLAUDE_TRAILER = '/^(?:Claude-Session:|Co-Authored-By: Claude\b)[^\r\n]*(?:\r\n|\n|$)/mi';
 
-    #[Override]
     protected $signature = 'agent-extras:format-commit-message
         {file : Path to the file holding the commit message}';
 
-    #[Override]
     protected $description = 'Strip the Claude trailers from a commit message and validate it against the commit message convention.';
 
     public function handle(): int

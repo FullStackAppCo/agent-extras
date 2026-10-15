@@ -18,17 +18,18 @@ readonly class PackageManager
     public function __construct(
         public string $composerToUse,
         public array $composerJson,
+        ?Closure $output = null,
     ) {
-        $this->output = $this->discard(...);
+        $this->output = $output ?? $this->discard(...);
     }
 
     /**
      * Receive Composer's output, along with this manager's own status lines,
      * as ($type, $output) pairs in the same shape as a Process callback.
      */
-    public function output(Closure $callback): static
+    public function output(Closure $callback): self
     {
-        return clone ($this, ['output' => $callback]);
+        return new self($this->composerToUse, $this->composerJson, $callback);
     }
 
     public function require(string ...$packages): bool

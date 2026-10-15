@@ -9,15 +9,12 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Override;
 
 class ValidateTagCommand extends Command
 {
-    #[Override]
     protected $signature = 'agent-extras:validate-tag
         {tag? : The tag name to validate (defaults to validating every local tag)}';
 
-    #[Override]
     protected $description = 'Validate a git tag name against the tag naming convention.';
 
     public function handle(): int

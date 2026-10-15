@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Override;
 
 class ValidateBranchCommand extends Command
 {
@@ -21,11 +20,9 @@ class ValidateBranchCommand extends Command
      */
     protected const array EXEMPT = ['main'];
 
-    #[Override]
     protected $signature = 'agent-extras:validate-branch
         {branch? : The branch name to validate (defaults to the current git branch)}';
 
-    #[Override]
     protected $description = 'Validate a git branch name against the branch naming convention.';
 
     public function handle(): int

@@ -12,7 +12,6 @@ use FullStackAppCo\AgentExtras\Exceptions\ScriptAlreadyRegistered;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
-use Override;
 
 class InstallCommand extends Command
 {
@@ -50,12 +49,10 @@ class InstallCommand extends Command
      */
     protected const array STUBS = ['phpstan.neon', 'rector.php'];
 
-    #[Override]
     protected $signature = 'agent-extras:install
         {--composer=global : Absolute path to the Composer binary which should be used to install packages}
         {--force : Overwrite existing composer scripts and configuration files}';
 
-    #[Override]
     protected $description = 'Add the test, analyze, format and refactor composer scripts, installing and configuring their dependencies, and enable the git hooks.';
 
     public function handle(): int
@@ -80,11 +77,11 @@ class InstallCommand extends Command
             return self::FAILURE;
         }
 
-        $io->read()
-            |> $this->addRepositories(...)
-            |> $this->addScripts(...)
-            |> $this->addHookScripts(...)
-            |> $io->write(...);
+        $composer = $this->addRepositories($io->read());
+        $composer = $this->addScripts($composer);
+        $composer = $this->addHookScripts($composer);
+
+        $io->write($composer);
 
         $this->publishConfiguration();
 
