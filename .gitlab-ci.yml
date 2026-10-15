@@ -74,3 +74,6 @@ install:
     - test -x .githooks/pre-push
     - test "$(git config core.hooksPath)" = .githooks
     - grep -q "@php $CONSOLE vendor:publish --tag=githooks --force" composer.json
+    # Run a published hook, which finds the console entry point and validates.
+    - printf 'Added qa checks\n' > .git/COMMIT_EDITMSG
+    - .githooks/commit-msg .git/COMMIT_EDITMSG
