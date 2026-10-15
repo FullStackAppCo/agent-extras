@@ -8,6 +8,7 @@ use FullStackAppCo\AgentExtras\Composer\JsonIo;
 use FullStackAppCo\AgentExtras\Composer\PackageManager;
 use FullStackAppCo\AgentExtras\Composer\RepositoryManager;
 use FullStackAppCo\AgentExtras\Composer\ScriptManager;
+use FullStackAppCo\AgentExtras\ConfigurationStubs;
 use FullStackAppCo\AgentExtras\Exceptions\ScriptAlreadyRegistered;
 use FullStackAppCo\AgentExtras\ServiceProvider;
 use Illuminate\Console\Command;
@@ -15,7 +16,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Str;
 
 class InstallCommand extends Command
 {
@@ -46,20 +46,6 @@ class InstallCommand extends Command
         'phpunit/phpunit' => '',
         'rector/rector' => '',
     ];
-
-    /**
-     * The directories the configuration covers in a Laravel application.
-     *
-     * @var list<string>
-     */
-    protected const array APPLICATION_PATHS = ['app', 'bootstrap', 'config', 'database', 'routes', 'tests'];
-
-    /**
-     * The directories within those paths which hold generated files.
-     *
-     * @var list<string>
-     */
-    protected const array APPLICATION_SKIP = ['bootstrap/cache'];
 
     protected $signature = 'agent-extras:install
         {--composer=global : Absolute path to the Composer binary which should be used to install packages}
@@ -248,28 +234,20 @@ class InstallCommand extends Command
      */
     protected function publishConfiguration(): void
     {
-        [$paths, $skip] = $this->configurationPaths();
+        $stubs = new ConfigurationStubs($this->laravel->basePath());
 
-        Collection::make([
-            'phpstan.neon' => [
-                'paths' => Arr::map($paths, fn (string $path): string => "        - {$path}/"),
-            ],
-            'rector.php' => [
-                'paths' => Arr::map($paths, fn (string $path): string => "        __DIR__.'/{$path}',"),
-                'skip' => Arr::map($skip, fn (string $path): string => "        __DIR__.'/{$path}',"),
-            ],
-        ])->each(function (array $placeholders, string $stub): void {
-            $target = $this->laravel->basePath($stub);
+        Collection::make(ConfigurationStubs::FILES)->each(function (string $file) use ($stubs): void {
+            $target = $this->laravel->basePath($file);
 
             if (File::exists($target) && ! $this->option('force')) {
-                $this->warn("Skipped the existing '{$stub}' (use --force to overwrite).");
+                $this->warn("Skipped the existing '{$file}' (use --force to overwrite).");
 
                 return;
             }
 
-            File::put($target, $this->renderStub($stub, $placeholders));
+            File::put($target, $stubs->render($file));
 
-            $this->info("Published '{$stub}'.");
+            $this->info("Published '{$file}'.");
         });
     }
 
@@ -304,40 +282,5 @@ class InstallCommand extends Command
 
                 $this->info("Published the '{$skill}' skill.");
             });
-    }
-
-    /**
-     * The directories the configuration covers, and those it skips within
-     * them. Laravel Zero keeps its code in `app` and a package in `src`.
-     *
-     * @return array{list<string>, list<string>}
-     */
-    protected function configurationPaths(): array
-    {
-        if ($this->isLaravel()) {
-            return [self::APPLICATION_PATHS, self::APPLICATION_SKIP];
-        }
-
-        $source = File::isDirectory($this->laravel->basePath('app')) ? 'app' : 'src';
-
-        return [[$source, 'tests'], []];
-    }
-
-    /**
-     * @param  array<string, list<string>>  $placeholders
-     */
-    protected function renderStub(string $stub, array $placeholders): string
-    {
-        $contents = File::get(__DIR__."/../../../stubs/{$stub}.stub");
-
-        foreach ($placeholders as $name => $lines) {
-            $contents = Str::replace(
-                "{{ {$name} }}\n",
-                $lines === [] ? '' : implode("\n", $lines)."\n",
-                $contents,
-            );
-        }
-
-        return $contents;
     }
 }
