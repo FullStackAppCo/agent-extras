@@ -137,6 +137,35 @@ class InstallCommandTest extends TestCase
     }
 
     #[Test]
+    public function it_publishes_the_git_hooks_through_the_composer_bin_when_there_is_no_artisan(): void
+    {
+        $this->writeComposer(['bin' => ['my-app']]);
+        File::put("{$this->project}/my-app", '<?php');
+
+        $this->artisan('agent-extras:install')->assertSuccessful();
+
+        $this->assertSame(
+            ['@php my-app vendor:publish --tag=githooks --force'],
+            $this->readComposer('scripts.post-update-cmd'),
+        );
+    }
+
+    #[Test]
+    public function it_publishes_the_git_hooks_through_artisan_when_the_project_has_one(): void
+    {
+        $this->writeComposer(['bin' => ['my-app']]);
+        File::put("{$this->project}/artisan", '<?php');
+        File::put("{$this->project}/my-app", '<?php');
+
+        $this->artisan('agent-extras:install')->assertSuccessful();
+
+        $this->assertSame(
+            ['@php artisan vendor:publish --tag=githooks --force'],
+            $this->readComposer('scripts.post-update-cmd'),
+        );
+    }
+
+    #[Test]
     public function it_publishes_the_git_hooks(): void
     {
         $this->writeComposer();

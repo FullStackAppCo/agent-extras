@@ -11,6 +11,8 @@
 # In an application the commands run through `artisan`. In a package under
 # development there is no `artisan`, so they run through the Testbench CLI
 # instead, which boots the package's service provider from testbench.yaml.
+# Laravel Zero has neither, so they run through the binary its composer.json
+# lists under `bin` (`application` unless the app was renamed).
 
 ROOT="$(git rev-parse --show-toplevel)"
 
@@ -33,9 +35,23 @@ else
     php_run() { (cd "$ROOT" && php "$@"); }
 fi
 
+# Print the first binary composer.json lists under `bin`, if it exists.
+composer_bin() {
+    local bin
+    bin="$(php_run -r '$bin = json_decode((string) @file_get_contents("composer.json"), true)["bin"] ?? []; echo is_array($bin) ? ($bin[0] ?? "") : $bin;')"
+
+    if [ -n "$bin" ] && [ -f "$ROOT/$bin" ]; then
+        echo "$bin"
+    fi
+}
+
 artisan() {
     if [ -z "$ARTISAN" ]; then
-        echo "Unable to find artisan or vendor/bin/testbench in $ROOT." >&2
+        ARTISAN="$(composer_bin)"
+    fi
+
+    if [ -z "$ARTISAN" ]; then
+        echo "Unable to find artisan, vendor/bin/testbench or a composer.json bin in $ROOT." >&2
         return 1
     fi
 

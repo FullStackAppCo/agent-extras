@@ -10,6 +10,7 @@ use FullStackAppCo\AgentExtras\Composer\RepositoryManager;
 use FullStackAppCo\AgentExtras\Composer\ScriptManager;
 use FullStackAppCo\AgentExtras\Exceptions\ScriptAlreadyRegistered;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -31,13 +32,6 @@ class InstallCommand extends Command
      */
     protected const array POST_INSTALL_SCRIPTS = [
         'git config core.hooksPath .githooks || true',
-    ];
-
-    /**
-     * @var list<string>
-     */
-    protected const array POST_UPDATE_SCRIPTS = [
-        '@php artisan vendor:publish --tag=githooks --force',
     ];
 
     /**
@@ -151,7 +145,7 @@ class InstallCommand extends Command
 
         Collection::make([
             'post-install-cmd' => self::POST_INSTALL_SCRIPTS,
-            'post-update-cmd' => self::POST_UPDATE_SCRIPTS,
+            'post-update-cmd' => ["@php {$this->entryPoint($composer)} vendor:publish --tag=githooks --force"],
         ])->each(function (array $scripts, string $event) use ($manager): void {
             if ($manager->append($event, $scripts) === []) {
                 $this->warn("Skipped the git hook entries already in the '{$event}' composer script.");
@@ -161,6 +155,24 @@ class InstallCommand extends Command
         });
 
         return $manager->toArray();
+    }
+
+    /**
+     * The project's console entry point, found the same way as the git hooks
+     * find it: `artisan` in an application, otherwise the binary composer.json
+     * lists under `bin`, which is how Laravel Zero names it.
+     *
+     * @param  array<string, mixed>  $composer
+     */
+    protected function entryPoint(array $composer): string
+    {
+        $bin = Arr::first(Arr::wrap($composer['bin'] ?? []));
+
+        if (! File::isFile($this->laravel->basePath('artisan')) && is_string($bin) && File::isFile($this->laravel->basePath($bin))) {
+            return $bin;
+        }
+
+        return 'artisan';
     }
 
     /**

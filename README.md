@@ -64,9 +64,9 @@ php artisan vendor:publish --provider="FullStackAppCo\AgentExtras\ServiceProvide
 
 - `commit-msg` runs `agent-extras:format-commit-message` against the message file.
 - `pre-push` runs `agent-extras:validate-branch` and `agent-extras:validate-tag` for each ref being pushed, or for the current branch and all local tags when run manually from a terminal.
-- `lib.sh` is a shared helper the hooks source to find `artisan` via Herd, Sail or the host PHP.
+- `lib.sh` is a shared helper the hooks source to run the commands via Herd, Sail or the host PHP. It runs them through `artisan`, or, in a Laravel Zero app, through the binary `composer.json` lists under `bin` (`application` unless the app was renamed).
 
-Each hook prints a descriptive error and exits non-zero when a name or message breaks the convention. Commit the published `.githooks` directory and enable it with `git config core.hooksPath .githooks`, typically from composer scripts: `post-install-cmd` enables the committed hooks in every new clone, and `post-update-cmd` republishes them when the package is updated so they stay current. `agent-extras:install` publishes and enables the hooks and adds these entries for you:
+Each hook prints a descriptive error and exits non-zero when a name or message breaks the convention. Commit the published `.githooks` directory and enable it with `git config core.hooksPath .githooks`, typically from composer scripts: `post-install-cmd` enables the committed hooks in every new clone, and `post-update-cmd` republishes them when the package is updated so they stay current. `agent-extras:install` publishes and enables the hooks and adds these entries for you, calling the Laravel Zero binary in place of `artisan` where there is one:
 
 ```json
 {
