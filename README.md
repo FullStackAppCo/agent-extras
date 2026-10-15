@@ -29,6 +29,19 @@ composer require --dev fsac/agent-extras "0.1.2"
 
 The service provider is registered through Laravel package discovery, so the Artisan commands the hooks rely on are available straight away.
 
+### Laravel Zero
+
+Laravel Zero ignores package discovery, so register the service provider yourself in `config/app.php`:
+
+```php
+'providers' => [
+    App\Providers\AppServiceProvider::class,
+    FullStackAppCo\AgentExtras\ServiceProvider::class,
+],
+```
+
+Then run the commands through the application binary in place of `artisan`, e.g. `php application agent-extras:install`.
+
 ## Quality tooling
 
 Run the install command to add the composer scripts, set up their tools and enable the git hooks:
