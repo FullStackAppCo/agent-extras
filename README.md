@@ -55,7 +55,7 @@ It makes the following changes to the project:
 - Adds the `test`, `analyze`, `format` and `refactor` composer scripts, which run PHPUnit, PHPStan (via Larastan), Pint and Rector respectively. Scripts the project already defines are left alone.
 - Adds the `vcs` repository entry for `fsac/rector-extras`, the FSAC Rector rules, which is not available on Packagist.
 - Requires `phpunit/phpunit`, `larastan/larastan`, `laravel/pint`, `rector/rector` and `fsac/rector-extras` as dev dependencies, skipping any already present.
-- Publishes a `phpstan.neon` and a `rector.php` tuned for a Laravel application. Existing files are left alone. Pint and PHPUnit use the configuration a Laravel application already ships with.
+- Publishes a `phpstan.neon` and a `rector.php` covering the project's directories: `app`, `bootstrap`, `config`, `database`, `routes` and `tests` in a Laravel application, otherwise `app` (Laravel Zero) or `src` (a package) and `tests`. Existing files are left alone. Pint and PHPUnit use the configuration a Laravel application already ships with.
 - Publishes the git hooks into `.githooks` and points git's `core.hooksPath` at them.
 - Appends the `post-install-cmd` and `post-update-cmd` entries described under [Git hooks](#git-hooks), which enable the hooks on every `composer install` and republish them on every `composer update`. Entries the events already list are left alone.
 

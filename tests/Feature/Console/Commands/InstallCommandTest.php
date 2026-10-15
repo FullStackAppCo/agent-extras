@@ -351,9 +351,66 @@ class InstallCommandTest extends TestCase
             ->expectsOutputToContain("Published 'rector.php'.")
             ->assertSuccessful();
 
-        foreach (['phpstan.neon', 'rector.php'] as $file) {
-            $this->assertFileEquals(__DIR__."/../../../../stubs/{$file}", "{$this->project}/{$file}");
-        }
+        $this->assertFileExists("{$this->project}/phpstan.neon");
+        $this->assertFileExists("{$this->project}/rector.php");
+    }
+
+    #[Test]
+    public function it_configures_the_application_directories_in_a_laravel_application(): void
+    {
+        $this->writeComposer();
+        File::put("{$this->project}/artisan", '<?php');
+
+        $this->artisan('agent-extras:install')->assertSuccessful();
+
+        $this->assertStringContainsString(<<<'NEON'
+                paths:
+                    - app/
+                    - bootstrap/
+                    - config/
+                    - database/
+                    - routes/
+                    - tests/
+
+            NEON, File::get("{$this->project}/phpstan.neon"));
+
+        $this->assertStringContainsString(<<<'PHP'
+                ->withPaths([
+                    __DIR__.'/app',
+                    __DIR__.'/bootstrap',
+                    __DIR__.'/config',
+                    __DIR__.'/database',
+                    __DIR__.'/routes',
+                    __DIR__.'/tests',
+                ])
+                ->withSkip([
+                    __DIR__.'/bootstrap/cache',
+                    ClosureToArrowFunctionRector::class,
+                ])
+            PHP, File::get("{$this->project}/rector.php"));
+    }
+
+    #[Test]
+    public function it_configures_the_app_and_tests_directories_in_a_laravel_zero_project(): void
+    {
+        $this->writeComposer(['bin' => ['my-app']]);
+        File::put("{$this->project}/my-app", '<?php');
+        File::makeDirectory("{$this->project}/app");
+
+        $this->artisan('agent-extras:install')->assertSuccessful();
+
+        $this->assertConfiguredPaths('app');
+    }
+
+    #[Test]
+    public function it_configures_the_src_and_tests_directories_in_a_package(): void
+    {
+        $this->writeComposer();
+        File::makeDirectory("{$this->project}/src");
+
+        $this->artisan('agent-extras:install')->assertSuccessful();
+
+        $this->assertConfiguredPaths('src');
     }
 
     #[Test]
@@ -380,7 +437,7 @@ class InstallCommandTest extends TestCase
             ->expectsOutputToContain("Published 'rector.php'.")
             ->assertSuccessful();
 
-        $this->assertFileEquals(__DIR__.'/../../../../stubs/rector.php', "{$this->project}/rector.php");
+        $this->assertStringContainsString('RectorConfig::configure()', File::get("{$this->project}/rector.php"));
     }
 
     #[Test]
@@ -392,6 +449,30 @@ class InstallCommandTest extends TestCase
 
         Process::assertNothingRan();
         $this->assertFileDoesNotExist("{$this->project}/phpstan.neon");
+    }
+
+    /**
+     * Assert the configuration covers the given source directory and the
+     * tests, skipping nothing but the rules the stub skips.
+     */
+    protected function assertConfiguredPaths(string $source): void
+    {
+        $this->assertStringContainsString(<<<NEON
+                paths:
+                    - {$source}/
+                    - tests/
+
+            NEON, File::get("{$this->project}/phpstan.neon"));
+
+        $this->assertStringContainsString(<<<PHP
+                ->withPaths([
+                    __DIR__.'/{$source}',
+                    __DIR__.'/tests',
+                ])
+                ->withSkip([
+                    ClosureToArrowFunctionRector::class,
+                ])
+            PHP, File::get("{$this->project}/rector.php"));
     }
 
     /**

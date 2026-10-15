@@ -12,15 +12,10 @@ use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 
 return RectorConfig::configure()
     ->withPaths([
-        __DIR__.'/app',
-        __DIR__.'/bootstrap',
-        __DIR__.'/config',
-        __DIR__.'/database',
-        __DIR__.'/routes',
-        __DIR__.'/tests',
+{{ paths }}
     ])
     ->withSkip([
-        __DIR__.'/bootstrap/cache',
+{{ skip }}
         ClosureToArrowFunctionRector::class,
     ])
     ->withPhpSets()

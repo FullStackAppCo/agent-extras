@@ -14,6 +14,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Str;
 
 class InstallCommand extends Command
 {
@@ -46,9 +47,18 @@ class InstallCommand extends Command
     ];
 
     /**
+     * The directories the configuration covers in a Laravel application.
+     *
      * @var list<string>
      */
-    protected const array STUBS = ['phpstan.neon', 'rector.php'];
+    protected const array APPLICATION_PATHS = ['app', 'bootstrap', 'config', 'database', 'routes', 'tests'];
+
+    /**
+     * The directories within those paths which hold generated files.
+     *
+     * @var list<string>
+     */
+    protected const array APPLICATION_SKIP = ['bootstrap/cache'];
 
     protected $signature = 'agent-extras:install
         {--composer=global : Absolute path to the Composer binary which should be used to install packages}
@@ -168,11 +178,20 @@ class InstallCommand extends Command
     {
         $bin = Arr::first(Arr::wrap($composer['bin'] ?? []));
 
-        if (! File::isFile($this->laravel->basePath('artisan')) && is_string($bin) && File::isFile($this->laravel->basePath($bin))) {
+        if (! $this->isLaravel() && is_string($bin) && File::isFile($this->laravel->basePath($bin))) {
             return $bin;
         }
 
         return 'artisan';
+    }
+
+    /**
+     * Whether the project is a Laravel application, as opposed to a Laravel
+     * Zero project or a package, which have no `artisan`.
+     */
+    protected function isLaravel(): bool
+    {
+        return File::isFile($this->laravel->basePath('artisan'));
     }
 
     /**
@@ -195,23 +214,68 @@ class InstallCommand extends Command
     }
 
     /**
-     * Copy the configuration stubs into the project, keeping any files the
+     * Publish the configuration stubs into the project, keeping any files the
      * project already has unless --force is given.
      */
     protected function publishConfiguration(): void
     {
-        foreach (self::STUBS as $stub) {
+        [$paths, $skip] = $this->configurationPaths();
+
+        Collection::make([
+            'phpstan.neon' => [
+                'paths' => Arr::map($paths, fn (string $path): string => "        - {$path}/"),
+            ],
+            'rector.php' => [
+                'paths' => Arr::map($paths, fn (string $path): string => "        __DIR__.'/{$path}',"),
+                'skip' => Arr::map($skip, fn (string $path): string => "        __DIR__.'/{$path}',"),
+            ],
+        ])->each(function (array $placeholders, string $stub): void {
             $target = $this->laravel->basePath($stub);
 
             if (File::exists($target) && ! $this->option('force')) {
                 $this->warn("Skipped the existing '{$stub}' (use --force to overwrite).");
 
-                continue;
+                return;
             }
 
-            File::copy(__DIR__."/../../../stubs/{$stub}", $target);
+            File::put($target, $this->renderStub($stub, $placeholders));
 
             $this->info("Published '{$stub}'.");
+        });
+    }
+
+    /**
+     * The directories the configuration covers, and those it skips within
+     * them. Laravel Zero keeps its code in `app` and a package in `src`.
+     *
+     * @return array{list<string>, list<string>}
+     */
+    protected function configurationPaths(): array
+    {
+        if ($this->isLaravel()) {
+            return [self::APPLICATION_PATHS, self::APPLICATION_SKIP];
         }
+
+        $source = File::isDirectory($this->laravel->basePath('app')) ? 'app' : 'src';
+
+        return [[$source, 'tests'], []];
+    }
+
+    /**
+     * @param  array<string, list<string>>  $placeholders
+     */
+    protected function renderStub(string $stub, array $placeholders): string
+    {
+        $contents = File::get(__DIR__."/../../../stubs/{$stub}.stub");
+
+        foreach ($placeholders as $name => $lines) {
+            $contents = Str::replace(
+                "{{ {$name} }}\n",
+                $lines === [] ? '' : implode("\n", $lines)."\n",
+                $contents,
+            );
+        }
+
+        return $contents;
     }
 }
