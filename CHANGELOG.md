@@ -1,6 +1,10 @@
 # Release Notes
 
-## [Unreleased](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.5...main)
+## [Unreleased](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.6...main)
+
+## [v0.1.6](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.5...v0.1.6) - 2026-10-16
+
+* Added a minimum code coverage check to CI by @jobyh in https://gitlab.com/fullstackappco/agent-extras/-/merge_requests/1
 
 ## [v0.1.5](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.4...v0.1.5) - 2026-10-16
 

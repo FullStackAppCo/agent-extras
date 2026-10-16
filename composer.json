@@ -1,6 +1,6 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "name": "fsac/agent-extras",
   "description": "Artisan commands that enforce FSAC git conventions for agent-driven Laravel projects",
   "keywords": [
