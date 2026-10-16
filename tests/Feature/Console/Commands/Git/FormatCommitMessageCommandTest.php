@@ -30,7 +30,7 @@ class FormatCommitMessageCommandTest extends TestCase
     #[TestWith(["Added qa checks\n"])]
     #[TestWith(["Added qa checks #8\n"])]
     #[TestWith(["Added qa checks #8\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n"])]
-    #[TestWith(["Added qa checks #8\n\nCo-Authored-By: Larry <larry@fullstackappco.com>\n"])]
+    #[TestWith(["Added qa checks #8\n\nCo-Authored-By: Jane Doe <jane@example.com>\n"])]
     #[TestWith(["Upgraded to PHP 8.4\n"])]
     public function it_accepts_messages_following_the_convention(string $message): void
     {
@@ -61,7 +61,7 @@ class FormatCommitMessageCommandTest extends TestCase
     {
         $file = $this->messageFile(
             "Added qa checks #8\n\n"
-            ."Co-Authored-By: Larry <larry@fullstackappco.com>\n"
+            ."Co-Authored-By: Jane Doe <jane@example.com>\n"
             ."Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n"
             ."Claude-Session: https://claude.ai/code/session_0123456789\n",
         );
@@ -71,7 +71,7 @@ class FormatCommitMessageCommandTest extends TestCase
             ->assertSuccessful();
 
         $this->assertSame(
-            "Added qa checks #8\n\nCo-Authored-By: Larry <larry@fullstackappco.com>\n",
+            "Added qa checks #8\n\nCo-Authored-By: Jane Doe <jane@example.com>\n",
             Storage::get('commit-msg'),
         );
     }
@@ -79,7 +79,7 @@ class FormatCommitMessageCommandTest extends TestCase
     #[Test]
     public function it_leaves_a_conforming_message_file_untouched(): void
     {
-        $message = "Added qa checks #8\n\nCo-Authored-By: Larry <larry@fullstackappco.com>\n";
+        $message = "Added qa checks #8\n\nCo-Authored-By: Jane Doe <jane@example.com>\n";
         $file = $this->messageFile($message);
 
         $this->artisan('agent-extras:format-commit-message', ['file' => $file])->assertSuccessful();
@@ -122,7 +122,7 @@ class FormatCommitMessageCommandTest extends TestCase
 
     #[Test]
     #[TestWith(["Added qa checks #8\n\nThis adds several qa checks to the pipeline.\n"])]
-    #[TestWith(["Added qa checks #8\nCo-Authored-By: Larry <larry@fullstackappco.com>\n"])]
+    #[TestWith(["Added qa checks #8\nCo-Authored-By: Jane Doe <jane@example.com>\n"])]
     public function it_rejects_descriptive_bodies_and_missing_blank_lines(string $message): void
     {
         $this->artisan('agent-extras:format-commit-message', ['file' => $this->messageFile($message)])
