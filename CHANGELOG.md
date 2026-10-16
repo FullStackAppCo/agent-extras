@@ -1,6 +1,12 @@
 # Release Notes
 
-## [Unreleased](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.4...main)
+## [Unreleased](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.5...main)
+
+## [v0.1.5](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.4...v0.1.5) - 2026-10-16
+
+* Published the configuration stubs with a config tag
+* Added a changelog entry to the release skill
+* Added the changelog
 
 ## [v0.1.4](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.3...v0.1.4) - 2026-10-15
 
