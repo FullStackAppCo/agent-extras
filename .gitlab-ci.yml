@@ -19,8 +19,11 @@ qa:
         - composer.lock
     paths:
       - .composer-cache
+  # Shows the line coverage on merge requests.
+  coverage: '/^\s*Lines:\s*(\d+\.\d+)%/'
   before_script:
     - apt-get update -yqq && apt-get install -yqq git unzip
+    - pecl install pcov && docker-php-ext-enable pcov
     - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
     - composer install --no-interaction --no-progress --prefer-dist
   script:
@@ -28,7 +31,15 @@ qa:
     - vendor/bin/pint --test
     - composer analyze
     - composer dump-autoload --strict-psr --optimize --dry-run
-    - composer test
+    - composer test -- --coverage-text --only-summary-for-coverage-text --coverage-clover build/clover.xml --colors=never
+    # Fail when line coverage drops below the minimum.
+    - |
+      php -r '
+          $metrics = simplexml_load_file("build/clover.xml")->project->metrics;
+          $coverage = 100 * (int) $metrics["coveredstatements"] / max(1, (int) $metrics["statements"]);
+          printf("Line coverage: %.2f%% (minimum %d%%)\n", $coverage, $argv[1]);
+          exit($coverage < $argv[1] ? 1 : 0);
+      ' 95
 
 # Install the package into fresh Laravel and Laravel Zero projects and run the
 # install command and the composer scripts it adds. Only on the default branch,
