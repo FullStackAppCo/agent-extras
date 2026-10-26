@@ -295,11 +295,11 @@ class InstallCommandTest extends TestCase
         ]);
 
         $this->artisan('agent-extras:install')
-            ->expectsOutputToContain('Requiring fsac/rector-extras:0.1.4, larastan/larastan and rector/rector.')
+            ->expectsOutputToContain('Requiring fsac/rector-extras:0.1.5, larastan/larastan and rector/rector.')
             ->assertSuccessful();
 
         Process::assertRan(fn (PendingProcess $process): bool => $process->command === [
-            'composer', 'require', '--dev', 'fsac/rector-extras:0.1.4', 'larastan/larastan', 'rector/rector',
+            'composer', 'require', '--dev', 'fsac/rector-extras:0.1.5', 'larastan/larastan', 'rector/rector',
         ] && $process->path === $this->project);
     }
 
@@ -309,7 +309,7 @@ class InstallCommandTest extends TestCase
         $this->writeComposer([
             'require' => ['phpunit/phpunit' => '^11.5.3'],
             'require-dev' => [
-                'fsac/rector-extras' => '0.1.4',
+                'fsac/rector-extras' => '0.1.5',
                 'larastan/larastan' => '^3.0',
                 'laravel/pint' => '^1.24',
                 'rector/rector' => '^2.6',

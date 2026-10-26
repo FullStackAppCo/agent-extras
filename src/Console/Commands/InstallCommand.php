@@ -40,7 +40,7 @@ class InstallCommand extends Command
      * @var array<string, string>
      */
     protected const array PACKAGES = [
-        'fsac/rector-extras' => '0.1.4',
+        'fsac/rector-extras' => '0.1.5',
         'larastan/larastan' => '',
         'laravel/pint' => '',
         'phpunit/phpunit' => '',

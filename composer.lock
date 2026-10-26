@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3b806176fcd88c1fb7501f5eafaf4dbb",
+    "content-hash": "b9c9b00396475bad01ca97280ee74cc6",
     "packages": [
         {
             "name": "brick/math",
@@ -6051,16 +6051,16 @@
         },
         {
             "name": "fsac/rector-extras",
-            "version": "0.1.4",
+            "version": "0.1.5",
             "source": {
                 "type": "git",
                 "url": "https://gitlab.com/fullstackappco/rector-extras.git",
-                "reference": "1672a502dd7ed7b1fe0e654e98f0cbdf7650b275"
+                "reference": "ab7973d920f87dd3dbd84a509f15f4d5f86ba9f4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/fullstackappco%2Frector-extras/repository/archive.zip?sha=1672a502dd7ed7b1fe0e654e98f0cbdf7650b275",
-                "reference": "1672a502dd7ed7b1fe0e654e98f0cbdf7650b275",
+                "url": "https://gitlab.com/api/v4/projects/fullstackappco%2Frector-extras/repository/archive.zip?sha=ab7973d920f87dd3dbd84a509f15f4d5f86ba9f4",
+                "reference": "ab7973d920f87dd3dbd84a509f15f4d5f86ba9f4",
                 "shasum": ""
             },
             "require": {
@@ -6128,9 +6128,9 @@
                 "rector"
             ],
             "support": {
-                "source": "https://gitlab.com/fullstackappco/rector-extras/-/tree/v0.1.4"
+                "source": "https://gitlab.com/fullstackappco/rector-extras/-/tree/v0.1.5"
             },
-            "time": "2026-08-30T13:07:43+01:00"
+            "time": "2026-10-26T12:48:09+00:00"
         },
         {
             "name": "hamcrest/hamcrest-php",
