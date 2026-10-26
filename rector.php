@@ -5,6 +5,7 @@ declare(strict_types=1);
 use FullStackAppCo\RectorExtras\Rules\ArtisanExitCodeAssertionRector;
 use FullStackAppCo\RectorExtras\Rules\HelperFunctionToFacadeRector;
 use FullStackAppCo\RectorExtras\Rules\NativeStringFunctionToStrRector;
+use FullStackAppCo\RectorExtras\Rules\TestPrefixToAttributeRector;
 use Rector\Config\RectorConfig;
 use Rector\Php74\Rector\Closure\ClosureToArrowFunctionRector;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
@@ -26,6 +27,7 @@ return RectorConfig::configure()
         DeclareStrictTypesRector::class,
         HelperFunctionToFacadeRector::class,
         NativeStringFunctionToStrRector::class,
+        TestPrefixToAttributeRector::class,
     ])
     ->withImportNames()
     ->withTypeCoverageLevel(0)

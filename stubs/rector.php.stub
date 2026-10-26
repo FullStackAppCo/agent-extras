@@ -6,6 +6,7 @@ use FullStackAppCo\RectorExtras\Rules\ArtisanExitCodeAssertionRector;
 use FullStackAppCo\RectorExtras\Rules\HelperFunctionToFacadeRector;
 use FullStackAppCo\RectorExtras\Rules\HttpStatusAssertionRector;
 use FullStackAppCo\RectorExtras\Rules\NativeStringFunctionToStrRector;
+use FullStackAppCo\RectorExtras\Rules\TestPrefixToAttributeRector;
 use Rector\Config\RectorConfig;
 use Rector\Php74\Rector\Closure\ClosureToArrowFunctionRector;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
@@ -25,6 +26,7 @@ return RectorConfig::configure()
         HelperFunctionToFacadeRector::class,
         HttpStatusAssertionRector::class,
         NativeStringFunctionToStrRector::class,
+        TestPrefixToAttributeRector::class,
     ])
     ->withImportNames()
     ->withTypeCoverageLevel(0)
