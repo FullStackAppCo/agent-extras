@@ -24,6 +24,7 @@ class InstallCommand extends Command
      */
     protected const array SCRIPTS = [
         'analyze' => ['@php vendor/bin/phpstan analyse'],
+        'check-psr4' => ['@composer dump-autoload --strict-psr --optimize --dry-run'],
         'format' => ['@php vendor/bin/pint'],
         'refactor' => ['@php vendor/bin/rector process'],
         'test' => ['@php vendor/bin/phpunit -d memory_limit=2G'],
@@ -51,7 +52,7 @@ class InstallCommand extends Command
         {--composer=global : Absolute path to the Composer binary which should be used to install packages}
         {--force : Overwrite existing composer scripts, configuration files and skills}';
 
-    protected $description = 'Add the test, analyze, format and refactor composer scripts, installing and configuring their dependencies, and enable the git hooks.';
+    protected $description = 'Add the test, analyze, check-psr4, format and refactor composer scripts, installing and configuring their dependencies, and enable the git hooks.';
 
     public function handle(): int
     {

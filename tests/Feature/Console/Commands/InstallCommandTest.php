@@ -66,6 +66,7 @@ class InstallCommandTest extends TestCase
         $this->assertSame([
             'post-autoload-dump' => ['@php artisan package:discover --ansi'],
             'analyze' => ['@php vendor/bin/phpstan analyse'],
+            'check-psr4' => ['@composer dump-autoload --strict-psr --optimize --dry-run'],
             'format' => ['@php vendor/bin/pint'],
             'refactor' => ['@php vendor/bin/rector process'],
             'test' => ['@php vendor/bin/phpunit -d memory_limit=2G'],
