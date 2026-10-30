@@ -54,7 +54,7 @@ class ServiceProviderTest extends TestCase
     {
         $this->artisan('vendor:publish', ['--tag' => 'githooks'])->assertSuccessful();
 
-        foreach (['commit-msg', 'pre-push', 'lib.sh'] as $hook) {
+        foreach (['commit-msg', 'pre-commit', 'pre-push', 'lib.sh'] as $hook) {
             $this->assertFileExists($this->app->basePath(".githooks/{$hook}"));
             $this->assertFileEquals(__DIR__."/../../resources/githooks/{$hook}", $this->app->basePath(".githooks/{$hook}"));
         }
@@ -76,6 +76,7 @@ class ServiceProviderTest extends TestCase
         }
 
         $this->assertTrue(is_executable($this->app->basePath('.githooks/commit-msg')));
+        $this->assertTrue(is_executable($this->app->basePath('.githooks/pre-commit')));
         $this->assertTrue(is_executable($this->app->basePath('.githooks/pre-push')));
         $this->assertFalse(is_executable($this->app->basePath('.githooks/lib.sh')));
     }
@@ -87,6 +88,7 @@ class ServiceProviderTest extends TestCase
             ->assertSuccessful();
 
         $this->assertFileExists($this->app->basePath('.githooks/commit-msg'));
+        $this->assertFileExists($this->app->basePath('.githooks/pre-commit'));
         $this->assertFileExists($this->app->basePath('.githooks/pre-push'));
         $this->assertFileExists($this->app->basePath('.githooks/lib.sh'));
     }

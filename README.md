@@ -76,6 +76,7 @@ To publish only this package's hooks, scope the command to its provider:
 php artisan vendor:publish --provider="FullStackAppCo\AgentExtras\ServiceProvider" --tag=githooks
 ```
 
+- `pre-commit` runs the `refactor` and `format` composer scripts against the staged PHP files, re-stages them, then runs `check-psr4` and `analyze`. It relies on the scripts `agent-extras:install` adds.
 - `commit-msg` runs `agent-extras:format-commit-message` against the message file.
 - `pre-push` runs `agent-extras:validate-branch` and `agent-extras:validate-tag` for each ref being pushed, or for the current branch and all local tags when run manually from a terminal.
 - `lib.sh` is a shared helper the hooks source to run the commands via Herd, Sail or the host PHP. It runs them through `artisan`, or, in a Laravel Zero app, through the binary `composer.json` lists under `bin` (`application` unless the app was renamed).
