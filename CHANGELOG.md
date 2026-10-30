@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.7...main)
 
+* Shipped the pre-commit hook and added the check-psr4 composer script to the install command
+
 ## [v0.1.7](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.6...v0.1.7) - 2026-10-26
 
 * Replaced a real email address in the test data with an example one by @jobyh in https://gitlab.com/fullstackappco/agent-extras/-/merge_requests/2

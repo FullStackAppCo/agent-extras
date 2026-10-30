@@ -52,7 +52,7 @@ php artisan agent-extras:install
 
 It makes the following changes to the project:
 
-- Adds the `test`, `analyze`, `format` and `refactor` composer scripts, which run PHPUnit, PHPStan (via Larastan), Pint and Rector respectively. Scripts the project already defines are left alone.
+- Adds the `test`, `analyze`, `check-psr4`, `format` and `refactor` composer scripts, which run PHPUnit, PHPStan (via Larastan), Composer's PSR-4 check, Pint and Rector respectively. Scripts the project already defines are left alone.
 - Adds the `vcs` repository entry for `fsac/rector-extras`, the FSAC Rector rules, which is not available on Packagist.
 - Requires `phpunit/phpunit`, `larastan/larastan`, `laravel/pint`, `rector/rector` and `fsac/rector-extras` as dev dependencies, skipping any already present.
 - Publishes a `phpstan.neon` and a `rector.php` covering the project's directories: `app`, `bootstrap`, `config`, `database`, `routes` and `tests` in a Laravel application, otherwise `app` (Laravel Zero) or `src` (a package) and `tests`. Existing files are left alone. Pint and PHPUnit use the configuration a Laravel application already ships with. The same files can be published on their own with `php artisan vendor:publish --tag=config`.
@@ -76,6 +76,7 @@ To publish only this package's hooks, scope the command to its provider:
 php artisan vendor:publish --provider="FullStackAppCo\AgentExtras\ServiceProvider" --tag=githooks
 ```
 
+- `pre-commit` runs the `refactor` and `format` composer scripts against the staged PHP files, re-stages them, then runs `check-psr4` and `analyze`. It relies on the scripts `agent-extras:install` adds.
 - `commit-msg` runs `agent-extras:format-commit-message` against the message file.
 - `pre-push` runs `agent-extras:validate-branch` and `agent-extras:validate-tag` for each ref being pushed, or for the current branch and all local tags when run manually from a terminal.
 - `lib.sh` is a shared helper the hooks source to run the commands via Herd, Sail or the host PHP. It runs them through `artisan`, or, in a Laravel Zero app, through the binary `composer.json` lists under `bin` (`application` unless the app was renamed).
@@ -103,7 +104,7 @@ The published hooks are kept executable, so no `chmod` step is needed.
 
 ### `agent-extras:install`
 
-Adds the `test`, `analyze`, `format` and `refactor` composer scripts, installs and configures their dependencies publishes and enables the git hooks and appends the `post-install-cmd` and `post-update-cmd` entries that keep them enabled and current, as described under [Quality tooling](#quality-tooling). Accepts `--force` and `--composer=<path>`.
+Adds the `test`, `analyze`, `check-psr4`, `format` and `refactor` composer scripts, installs and configures their dependencies publishes and enables the git hooks and appends the `post-install-cmd` and `post-update-cmd` entries that keep them enabled and current, as described under [Quality tooling](#quality-tooling). Accepts `--force` and `--composer=<path>`.
 
 ### `agent-extras:validate-branch [branch]`
 
