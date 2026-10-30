@@ -1,8 +1,10 @@
 # Release Notes
 
-## [Unreleased](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.7...main)
+## [Unreleased](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.2.0...main)
 
-* Shipped the pre-commit hook and added the check-psr4 composer script to the install command
+## [v0.2.0](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.7...v0.2.0) - 2026-10-30
+
+* Shipped the pre-commit hook and added the check-psr4 composer script to the install command by @jobyh in https://gitlab.com/fullstackappco/agent-extras/-/merge_requests/4
 
 ## [v0.1.7](https://gitlab.com/fullstackappco/agent-extras/-/compare/v0.1.6...v0.1.7) - 2026-10-26
 
