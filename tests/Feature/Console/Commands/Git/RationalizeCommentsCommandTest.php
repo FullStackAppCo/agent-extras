@@ -40,15 +40,19 @@ class RationalizeCommentsCommandTest extends TestCase
     }
 
     #[Test]
-    public function it_ignores_docblocks_and_tool_directives(): void
+    public function it_ignores_docblocks_with_phpdoc_tags_and_tool_directives(): void
     {
         $this->fakeGit(staged: <<<'PHP'
             <?php
 
             /**
              * A docblock.
+             *
+             * @return void
              */
             function foo(): void {}
+            /** {@inheritDoc} */
+            function bar(): void {}
             // @phpstan-ignore-next-line
             $a = foo();
             /* phpcs:ignore */
@@ -57,6 +61,24 @@ class RationalizeCommentsCommandTest extends TestCase
 
         $this->artisan('agent-extras:rationalize-comments')
             ->doesntExpectOutputToContain('src/Foo.php')
+            ->assertSuccessful();
+    }
+
+    #[Test]
+    public function it_lists_docblocks_without_phpdoc_tags(): void
+    {
+        $this->fakeGit(staged: <<<'PHP'
+            <?php
+
+            /**
+             * Get the user.
+             */
+            function getUser(): void {}
+            PHP);
+
+        $this->artisan('agent-extras:rationalize-comments')
+            ->expectsOutputToContain('src/Foo.php:3-5')
+            ->expectsOutputToContain('4 |  * Get the user.')
             ->assertSuccessful();
     }
 

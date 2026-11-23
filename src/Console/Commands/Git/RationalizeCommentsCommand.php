@@ -19,6 +19,12 @@ class RationalizeCommentsCommand extends Command
     protected const string DIRECTIVE = '/@(phpstan|psalm|phan)-|@codeCoverageIgnore|@noRector|@noinspection|@infection-ignore|phpcs:|php-cs-fixer-ignore/i';
 
     /**
+     * A PHPDoc tag such as `@param` or `{@inheritDoc}`. Docblocks carrying
+     * one hold type information for tooling, so they are never up for review.
+     */
+    protected const string PHPDOC_TAG = '/(?:^|[\s*{])@[a-zA-Z]/';
+
+    /**
      * The lines of code shown after each comment so its value can be judged.
      */
     protected const int CONTEXT_LINES = 3;
@@ -26,7 +32,7 @@ class RationalizeCommentsCommand extends Command
     protected $signature = 'agent-extras:rationalize-comments
         {paths?* : The PHP files to inspect (defaults to the staged PHP files)}';
 
-    protected $description = 'List the non-docblock comments the staged changes add, with the code around them.';
+    protected $description = 'List the comments and tagless docblocks the staged changes add, with the code around them.';
 
     public function handle(): int
     {
@@ -114,7 +120,8 @@ class RationalizeCommentsCommand extends Command
     }
 
     /**
-     * The non-docblock comments in the source, leaving out tool directives.
+     * The comments in the source, along with any docblocks that carry no
+     * PHPDoc tags, leaving out tool directives.
      *
      * @return Collection<int, PhpToken>
      */
@@ -127,6 +134,10 @@ class RationalizeCommentsCommand extends Command
 
     protected function isComment(PhpToken $token): bool
     {
+        if ($token->is(T_DOC_COMMENT)) {
+            return preg_match(self::PHPDOC_TAG, $token->text) !== 1;
+        }
+
         return $token->is(T_COMMENT) && preg_match(self::DIRECTIVE, $token->text) !== 1;
     }
 
