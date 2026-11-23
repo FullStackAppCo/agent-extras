@@ -35,3 +35,40 @@ composer check-psr4
 
 echo "→ analyze"
 composer analyze
+
+echo "→ comment review"
+COMMENTS="$(artisan agent-extras:added-comments)"
+
+if [ -z "$COMMENTS" ]; then
+    exit 0
+fi
+
+if ! command -v claude >/dev/null 2>&1; then
+    echo "  Claude Code is not installed — skipping the comment review." >&2
+    exit 0
+fi
+
+# Unset CLAUDECODE so the review also runs when Claude Code itself commits.
+if ! VERDICT="$(printf '%s\n' "$COMMENTS" | env -u CLAUDECODE claude -p \
+    --model haiku \
+    --tools "" \
+    --strict-mcp-config \
+    --system-prompt "$(cat "$(dirname "${BASH_SOURCE[0]}")/comment-review.md")" \
+    "Review these added comments.")"; then
+    echo "  The comment review failed to run — skipping it." >&2
+    exit 0
+fi
+
+case "$(printf '%s\n' "$VERDICT" | head -n 1 | tr -d '[:space:]')" in
+    PASS)
+        ;;
+    FAIL)
+        echo "Comment review failed: these added comments add little value." >&2
+        printf '%s\n' "$VERDICT" | tail -n +2 >&2
+        echo "Remove them, or rewrite them to explain why the code is the way it is, then commit again." >&2
+        exit 1
+        ;;
+    *)
+        echo "  The comment review gave an unexpected reply — skipping it." >&2
+        ;;
+esac

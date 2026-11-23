@@ -54,7 +54,7 @@ class ServiceProviderTest extends TestCase
     {
         $this->artisan('vendor:publish', ['--tag' => 'githooks'])->assertSuccessful();
 
-        foreach (['commit-msg', 'pre-commit', 'pre-push', 'lib.sh'] as $hook) {
+        foreach (['commit-msg', 'pre-commit', 'pre-push', 'lib.sh', 'comment-review.md'] as $hook) {
             $this->assertFileExists($this->app->basePath(".githooks/{$hook}"));
             $this->assertFileEquals(__DIR__."/../../resources/githooks/{$hook}", $this->app->basePath(".githooks/{$hook}"));
         }
