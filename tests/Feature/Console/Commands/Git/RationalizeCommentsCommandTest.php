@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-class AddedCommentsCommandTest extends TestCase
+class RationalizeCommentsCommandTest extends TestCase
 {
     protected const string HEAD = <<<'PHP'
         <?php
@@ -31,7 +31,7 @@ class AddedCommentsCommandTest extends TestCase
             $b = 2;
             PHP);
 
-        $this->artisan('agent-extras:added-comments')
+        $this->artisan('agent-extras:rationalize-comments')
             ->expectsOutputToContain('src/Foo.php:5-6')
             ->expectsOutputToContain('5 | // Loop over the items')
             ->expectsOutputToContain('7 | $b = 2;')
@@ -55,7 +55,7 @@ class AddedCommentsCommandTest extends TestCase
             $b = 2;
             PHP);
 
-        $this->artisan('agent-extras:added-comments')
+        $this->artisan('agent-extras:rationalize-comments')
             ->doesntExpectOutputToContain('src/Foo.php')
             ->assertSuccessful();
     }
@@ -72,7 +72,7 @@ class AddedCommentsCommandTest extends TestCase
             $b = 2;
             PHP);
 
-        $this->artisan('agent-extras:added-comments')
+        $this->artisan('agent-extras:rationalize-comments')
             ->expectsOutputToContain('src/Foo.php:3')
             ->expectsOutputToContain('src/Foo.php:5')
             ->assertSuccessful();
@@ -83,7 +83,7 @@ class AddedCommentsCommandTest extends TestCase
     {
         $this->fakeGit(staged: self::HEAD, head: null);
 
-        $this->artisan('agent-extras:added-comments')
+        $this->artisan('agent-extras:rationalize-comments')
             ->expectsOutputToContain('src/Foo.php:3')
             ->assertSuccessful();
     }
@@ -96,7 +96,7 @@ class AddedCommentsCommandTest extends TestCase
             '*show*:src/Bar.php*' => Process::result(self::HEAD."\n// New\n"),
         ]);
 
-        $this->artisan('agent-extras:added-comments', ['paths' => ['src/Bar.php']])
+        $this->artisan('agent-extras:rationalize-comments', ['paths' => ['src/Bar.php']])
             ->expectsOutputToContain('src/Bar.php:5')
             ->assertSuccessful();
 
@@ -110,7 +110,7 @@ class AddedCommentsCommandTest extends TestCase
             '*diff*' => Process::result('', exitCode: 128),
         ]);
 
-        $this->artisan('agent-extras:added-comments')
+        $this->artisan('agent-extras:rationalize-comments')
             ->expectsOutputToContain('Unable to list the staged files.')
             ->assertFailed();
     }

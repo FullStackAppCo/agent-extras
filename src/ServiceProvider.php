@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace FullStackAppCo\AgentExtras;
 
-use FullStackAppCo\AgentExtras\Console\Commands\Git\AddedCommentsCommand;
 use FullStackAppCo\AgentExtras\Console\Commands\Git\FormatCommitMessageCommand;
+use FullStackAppCo\AgentExtras\Console\Commands\Git\RationalizeCommentsCommand;
 use FullStackAppCo\AgentExtras\Console\Commands\Git\ValidateBranchCommand;
 use FullStackAppCo\AgentExtras\Console\Commands\Git\ValidateTagCommand;
 use FullStackAppCo\AgentExtras\Console\Commands\InstallCommand;
@@ -55,7 +55,7 @@ class ServiceProvider extends BaseServiceProvider
         }
 
         $this->commands([
-            AddedCommentsCommand::class,
+            RationalizeCommentsCommand::class,
             FormatCommitMessageCommand::class,
             InstallCommand::class,
             ValidateBranchCommand::class,

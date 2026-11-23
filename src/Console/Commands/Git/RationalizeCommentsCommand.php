@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 use PhpToken;
 
-class AddedCommentsCommand extends Command
+class RationalizeCommentsCommand extends Command
 {
     /**
      * Comments that direct tooling rather than explain code, which are never
@@ -23,7 +23,7 @@ class AddedCommentsCommand extends Command
      */
     protected const int CONTEXT_LINES = 3;
 
-    protected $signature = 'agent-extras:added-comments
+    protected $signature = 'agent-extras:rationalize-comments
         {paths?* : The PHP files to inspect (defaults to the staged PHP files)}';
 
     protected $description = 'List the non-docblock comments the staged changes add, with the code around them.';

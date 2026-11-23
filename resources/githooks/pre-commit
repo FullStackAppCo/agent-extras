@@ -37,7 +37,7 @@ echo "→ analyze"
 composer analyze
 
 echo "→ comment review"
-COMMENTS="$(artisan agent-extras:added-comments)"
+COMMENTS="$(artisan agent-extras:rationalize-comments)"
 
 if [ -z "$COMMENTS" ]; then
     exit 0
