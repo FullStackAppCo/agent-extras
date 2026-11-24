@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-class RationalizeCommentsCommandTest extends TestCase
+class ExtractNonEssentialCommentsCommandTest extends TestCase
 {
     protected const string HEAD = <<<'PHP'
         <?php
@@ -31,7 +31,7 @@ class RationalizeCommentsCommandTest extends TestCase
             $b = 2;
             PHP);
 
-        $this->artisan('agent-extras:rationalize-comments')
+        $this->artisan('agent-extras:nonessential-comments')
             ->expectsOutputToContain('src/Foo.php:5-6')
             ->expectsOutputToContain('5 | // Loop over the items')
             ->expectsOutputToContain('7 | $b = 2;')
@@ -59,7 +59,7 @@ class RationalizeCommentsCommandTest extends TestCase
             $b = 2;
             PHP);
 
-        $this->artisan('agent-extras:rationalize-comments')
+        $this->artisan('agent-extras:nonessential-comments')
             ->doesntExpectOutputToContain('src/Foo.php')
             ->assertSuccessful();
     }
@@ -76,7 +76,7 @@ class RationalizeCommentsCommandTest extends TestCase
             function getUser(): void {}
             PHP);
 
-        $this->artisan('agent-extras:rationalize-comments')
+        $this->artisan('agent-extras:nonessential-comments')
             ->expectsOutputToContain('src/Foo.php:3-5')
             ->expectsOutputToContain('4 |  * Get the user.')
             ->assertSuccessful();
@@ -94,7 +94,7 @@ class RationalizeCommentsCommandTest extends TestCase
             $b = 2;
             PHP);
 
-        $this->artisan('agent-extras:rationalize-comments')
+        $this->artisan('agent-extras:nonessential-comments')
             ->expectsOutputToContain('src/Foo.php:3')
             ->expectsOutputToContain('src/Foo.php:5')
             ->assertSuccessful();
@@ -105,7 +105,7 @@ class RationalizeCommentsCommandTest extends TestCase
     {
         $this->fakeGit(staged: self::HEAD, head: null);
 
-        $this->artisan('agent-extras:rationalize-comments')
+        $this->artisan('agent-extras:nonessential-comments')
             ->expectsOutputToContain('src/Foo.php:3')
             ->assertSuccessful();
     }
@@ -118,7 +118,7 @@ class RationalizeCommentsCommandTest extends TestCase
             '*show*:src/Bar.php*' => Process::result(self::HEAD."\n// New\n"),
         ]);
 
-        $this->artisan('agent-extras:rationalize-comments', ['paths' => ['src/Bar.php']])
+        $this->artisan('agent-extras:nonessential-comments', ['paths' => ['src/Bar.php']])
             ->expectsOutputToContain('src/Bar.php:5')
             ->assertSuccessful();
 
@@ -132,7 +132,7 @@ class RationalizeCommentsCommandTest extends TestCase
             '*diff*' => Process::result('', exitCode: 128),
         ]);
 
-        $this->artisan('agent-extras:rationalize-comments')
+        $this->artisan('agent-extras:nonessential-comments')
             ->expectsOutputToContain('Unable to list the staged files.')
             ->assertFailed();
     }

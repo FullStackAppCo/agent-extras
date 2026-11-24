@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 use PhpToken;
 
-class RationalizeCommentsCommand extends Command
+class ExtractNonEssentialCommentsCommand extends Command
 {
     /**
      * Comments that direct tooling rather than explain code, which are never
@@ -29,7 +29,7 @@ class RationalizeCommentsCommand extends Command
      */
     protected const int CONTEXT_LINES = 3;
 
-    protected $signature = 'agent-extras:rationalize-comments
+    protected $signature = 'agent-extras:nonessential-comments
         {paths?* : The PHP files to inspect (defaults to the staged PHP files)}';
 
     protected $description = 'List the comments and tagless docblocks the staged changes add, with the code around them.';

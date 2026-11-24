@@ -76,7 +76,7 @@ To publish only this package's hooks, scope the command to its provider:
 php artisan vendor:publish --provider="FullStackAppCo\AgentExtras\ServiceProvider" --tag=githooks
 ```
 
-- `pre-commit` runs the `refactor` and `format` composer scripts against the staged PHP files, re-stages them, then runs `check-psr4` and `analyze`. It relies on the scripts `agent-extras:install` adds. Finally it reviews any comments the commit adds, including docblocks with no PHPDoc tags: `agent-extras:rationalize-comments` lists them with the code that follows, and Claude Code (`claude -p` with Haiku) judges them against the guidance in `comment-review.md`, failing the commit for comments that narrate the code rather than explain it. Tool directives such as `@phpstan-ignore` and `phpcs:` are exempt. The review is skipped, with a warning, when Claude Code is not installed or the review cannot run, and `git commit --no-verify` skips it along with the rest of the hook.
+- `pre-commit` runs the `refactor` and `format` composer scripts against the staged PHP files, re-stages them, then runs `check-psr4` and `analyze`. It relies on the scripts `agent-extras:install` adds. Finally it reviews any comments the commit adds, including docblocks with no PHPDoc tags: `agent-extras:nonessential-comments` lists them with the code that follows, and Claude Code (`claude -p` with Haiku) judges them against the guidance in `comment-review.md`, failing the commit for comments that narrate the code rather than explain it. Tool directives such as `@phpstan-ignore` and `phpcs:` are exempt. The review is skipped, with a warning, when Claude Code is not installed or the review cannot run, and `git commit --no-verify` skips it along with the rest of the hook.
 - `comment-review.md` is the prompt for the comment review. Edit the published copy to tune what counts as a valuable comment, bearing in mind that `post-update-cmd` republishes it.
 - `commit-msg` runs `agent-extras:format-commit-message` against the message file.
 - `pre-push` runs `agent-extras:validate-branch` and `agent-extras:validate-tag` for each ref being pushed, or for the current branch and all local tags when run manually from a terminal.
@@ -115,7 +115,7 @@ Validates a branch name against the branch naming convention: terse kebab-case w
 
 Validates a tag name against the tag naming convention: a `v`-prefixed semantic version with no leading zeros or suffixes (e.g. `v1.4.2`). With no argument it validates every local tag.
 
-### `agent-extras:rationalize-comments [paths...]`
+### `agent-extras:nonessential-comments [paths...]`
 
 Lists the comments the staged copy of each file adds over `HEAD`, including docblocks that carry no PHPDoc tags such as `@param` or `{@inheritDoc}`, grouping comments on consecutive lines into blocks and showing each block's line numbers with the few lines of code that follow it. With no arguments it inspects the staged PHP files. Comments that are tool directives, such as `@phpstan-ignore` or `phpcs:ignore`, are left out. It prints nothing when the changes add no comments.
 
