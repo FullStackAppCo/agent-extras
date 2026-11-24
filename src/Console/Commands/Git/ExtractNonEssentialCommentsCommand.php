@@ -16,9 +16,6 @@ class ExtractNonEssentialCommentsCommand extends Command
 
     protected const string PHPDOC_TAG = '/(?:^|[\s*{])@[a-zA-Z]/';
 
-    /**
-     * The lines of code shown after each comment so its value can be judged.
-     */
     protected const int CONTEXT_LINES = 3;
 
     protected $signature = 'agent-extras:nonessential-comments
