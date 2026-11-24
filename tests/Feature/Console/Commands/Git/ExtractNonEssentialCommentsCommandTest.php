@@ -109,6 +109,17 @@ class ExtractNonEssentialCommentsCommandTest extends TestCase
             ->assertSuccessful();
     }
 
+    #[Test]
+    public function it_handles_windows_line_endings(): void
+    {
+        $this->fakeGit(staged: "<?php\r\n\r\n/*\r\n * One\r\n */\r\n// Two\r\n\$a = 1;\r\n");
+
+        $this->artisan('agent-extras:nonessential-comments', ['paths' => ['src/Foo.php']])
+            ->expectsOutputToContain('src/Foo.php:3-6')
+            ->expectsOutputToContain('7 | $a = 1;')
+            ->assertSuccessful();
+    }
+
     protected function fakeGit(string $staged, ?string $head = self::HEAD): void
     {
         Process::fake([
