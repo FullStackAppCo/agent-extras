@@ -115,9 +115,9 @@ Validates a branch name against the branch naming convention: terse kebab-case w
 
 Validates a tag name against the tag naming convention: a `v`-prefixed semantic version with no leading zeros or suffixes (e.g. `v1.4.2`). With no argument it validates every local tag.
 
-### `agent-extras:nonessential-comments [paths...]`
+### `agent-extras:nonessential-comments <paths...>`
 
-Lists the comments the staged copy of each file adds over `HEAD`, including docblocks that carry no PHPDoc tags such as `@param` or `{@inheritDoc}`, grouping comments on consecutive lines into blocks and showing each block's line numbers with the few lines of code that follow it. With no arguments it inspects the staged PHP files. Comments that are tool directives, such as `@phpstan-ignore` or `phpcs:ignore`, are left out. It prints nothing when the changes add no comments.
+Takes the paths of staged PHP files and lists the comments the staged copy of each adds over `HEAD`, including docblocks that carry no PHPDoc tags such as `@param` or `{@inheritDoc}`, grouping comments on consecutive lines into blocks and showing each block's line numbers with the few lines of code that follow it. Comments that are tool directives, such as `@phpstan-ignore` or `phpcs:ignore`, are left out. It prints nothing when the changes add no comments.
 
 ### `agent-extras:format-commit-message <file>`
 

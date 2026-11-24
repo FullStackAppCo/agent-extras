@@ -30,21 +30,13 @@ class ExtractNonEssentialCommentsCommand extends Command
     protected const int CONTEXT_LINES = 3;
 
     protected $signature = 'agent-extras:nonessential-comments
-        {paths?* : The PHP files to inspect (defaults to the staged PHP files)}';
+        {paths* : The staged PHP files to inspect}';
 
     protected $description = 'List the comments and tagless docblocks the staged changes add, with the code around them.';
 
     public function handle(): int
     {
-        $paths = $this->argument('paths') ?: $this->stagedPaths();
-
-        if ($paths === null) {
-            $this->error('Unable to list the staged files.');
-
-            return self::FAILURE;
-        }
-
-        Collection::make($paths)
+        Collection::make($this->argument('paths'))
             ->flatMap(fn (string $path): Collection => $this->report($path))
             ->each(function (string $block, int $index): void {
                 if ($index > 0) {
@@ -55,20 +47,6 @@ class ExtractNonEssentialCommentsCommand extends Command
             });
 
         return self::SUCCESS;
-    }
-
-    /**
-     * @return list<string>|null
-     */
-    protected function stagedPaths(): ?array
-    {
-        $result = Process::run(['git', 'diff', '--cached', '--name-only', '--diff-filter=ACM', '--', '*.php']);
-
-        if ($result->failed()) {
-            return null;
-        }
-
-        return Str::of($result->output())->explode("\n")->map(fn (string $line): string => Str::trim($line))->filter()->values()->all();
     }
 
     /**

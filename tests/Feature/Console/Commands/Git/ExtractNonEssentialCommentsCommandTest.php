@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Console\Commands\Git;
 
 use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -31,7 +30,7 @@ class ExtractNonEssentialCommentsCommandTest extends TestCase
             $b = 2;
             PHP);
 
-        $this->artisan('agent-extras:nonessential-comments')
+        $this->artisan('agent-extras:nonessential-comments', ['paths' => ['src/Foo.php']])
             ->expectsOutputToContain('src/Foo.php:5-6')
             ->expectsOutputToContain('5 | // Loop over the items')
             ->expectsOutputToContain('7 | $b = 2;')
@@ -59,7 +58,7 @@ class ExtractNonEssentialCommentsCommandTest extends TestCase
             $b = 2;
             PHP);
 
-        $this->artisan('agent-extras:nonessential-comments')
+        $this->artisan('agent-extras:nonessential-comments', ['paths' => ['src/Foo.php']])
             ->doesntExpectOutputToContain('src/Foo.php')
             ->assertSuccessful();
     }
@@ -76,7 +75,7 @@ class ExtractNonEssentialCommentsCommandTest extends TestCase
             function getUser(): void {}
             PHP);
 
-        $this->artisan('agent-extras:nonessential-comments')
+        $this->artisan('agent-extras:nonessential-comments', ['paths' => ['src/Foo.php']])
             ->expectsOutputToContain('src/Foo.php:3-5')
             ->expectsOutputToContain('4 |  * Get the user.')
             ->assertSuccessful();
@@ -94,7 +93,7 @@ class ExtractNonEssentialCommentsCommandTest extends TestCase
             $b = 2;
             PHP);
 
-        $this->artisan('agent-extras:nonessential-comments')
+        $this->artisan('agent-extras:nonessential-comments', ['paths' => ['src/Foo.php']])
             ->expectsOutputToContain('src/Foo.php:3')
             ->expectsOutputToContain('src/Foo.php:5')
             ->assertSuccessful();
@@ -105,42 +104,14 @@ class ExtractNonEssentialCommentsCommandTest extends TestCase
     {
         $this->fakeGit(staged: self::HEAD, head: null);
 
-        $this->artisan('agent-extras:nonessential-comments')
+        $this->artisan('agent-extras:nonessential-comments', ['paths' => ['src/Foo.php']])
             ->expectsOutputToContain('src/Foo.php:3')
             ->assertSuccessful();
-    }
-
-    #[Test]
-    public function it_inspects_the_given_paths(): void
-    {
-        Process::fake([
-            '*show*HEAD:src/Bar.php*' => Process::result(self::HEAD),
-            '*show*:src/Bar.php*' => Process::result(self::HEAD."\n// New\n"),
-        ]);
-
-        $this->artisan('agent-extras:nonessential-comments', ['paths' => ['src/Bar.php']])
-            ->expectsOutputToContain('src/Bar.php:5')
-            ->assertSuccessful();
-
-        Process::assertNotRan(fn ($process): bool => Str::contains(implode(' ', (array) $process->command), 'diff'));
-    }
-
-    #[Test]
-    public function it_fails_when_the_staged_files_cannot_be_listed(): void
-    {
-        Process::fake([
-            '*diff*' => Process::result('', exitCode: 128),
-        ]);
-
-        $this->artisan('agent-extras:nonessential-comments')
-            ->expectsOutputToContain('Unable to list the staged files.')
-            ->assertFailed();
     }
 
     protected function fakeGit(string $staged, ?string $head = self::HEAD): void
     {
         Process::fake([
-            '*diff*' => Process::result("src/Foo.php\n"),
             '*show*HEAD:src/Foo.php*' => $head === null ? Process::result('', exitCode: 128) : Process::result($head),
             '*show*:src/Foo.php*' => Process::result($staged),
         ]);
