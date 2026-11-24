@@ -6,7 +6,11 @@
       "Read(auth.json)",
       "Read(.npmrc)",
       "Edit(node_modules/**)",
-      "Edit(vendor/**)"
+      "Edit(vendor/**)",
+      "Bash(git commit *--no-verify*)",
+      "Bash(git commit -n*)",
+      "Bash(git commit * -n*)",
+      "Bash(git push *--no-verify*)"
     ]
   }
 }

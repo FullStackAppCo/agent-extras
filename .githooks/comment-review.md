@@ -1,0 +1,1 @@
+../resources/githooks/comment-review.md
