@@ -12,16 +12,8 @@ use PhpToken;
 
 class ExtractNonEssentialCommentsCommand extends Command
 {
-    /**
-     * Comments that direct tooling rather than explain code, which are never
-     * up for review.
-     */
     protected const string DIRECTIVE = '/@(phpstan|psalm|phan)-|@codeCoverageIgnore|@noRector|@noinspection|@infection-ignore|phpcs:|php-cs-fixer-ignore/i';
 
-    /**
-     * A PHPDoc tag such as `@param` or `{@inheritDoc}`. Docblocks carrying
-     * one hold type information for tooling, so they are never up for review.
-     */
     protected const string PHPDOC_TAG = '/(?:^|[\s*{])@[a-zA-Z]/';
 
     /**
@@ -98,9 +90,6 @@ class ExtractNonEssentialCommentsCommand extends Command
     }
 
     /**
-     * The comments in the source, along with any docblocks that carry no
-     * PHPDoc tags, leaving out tool directives.
-     *
      * @return Collection<int, PhpToken>
      */
     protected function comments(string $source): Collection
